@@ -111,22 +111,6 @@ class ProjectDetails extends StatelessWidget {
     }
   }
 
-  String formatWithSeparator(double? value) {
-    if (value == null) {
-      return '0';
-    }
-    final formatted = value!.toStringAsFixed(0);
-    final buffer = StringBuffer();
-    final chars = formatted.split('');
-    for (int i = 0; i < chars.length; i++) {
-      if (i > 0 && (chars.length - i) % 3 == 0) {
-        buffer.write(',');
-      }
-      buffer.write(chars[i]);
-    }
-    return buffer.toString();
-  }
-
   Future<List<ProjectTask>> fetchProjectTasks() async {
     final response = await Supabase.instance.client
         .from('project_tasks')
@@ -158,6 +142,120 @@ class ProjectDetails extends StatelessWidget {
         avatarUrl: profile?['avatar_url'] as String?,
       );
     }).toList();
+  }
+
+  String formatWithSeparator(double? value) {
+    if (value == null) {
+      return '0';
+    }
+    final formatted = value!.toStringAsFixed(0);
+    final buffer = StringBuffer();
+    final chars = formatted.split('');
+    for (int i = 0; i < chars.length; i++) {
+      if (i > 0 && (chars.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(chars[i]);
+    }
+    return buffer.toString();
+  }
+
+  Widget buildBudgetSection(
+    BuildContext context,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
+    if (project.budgetGoal == null || project.budgetGoal! <= 0) {
+      return const SizedBox.shrink();
+    }
+    final budgetProgress = (project.budgetCollected ?? 0) / project.budgetGoal!;
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Budget Progress',
+            style: textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Budget Collected',
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                '${(budgetProgress * 100).toStringAsFixed(0)}%',
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                LinearProgressIndicator(
+                  value: budgetProgress.clamp(0, 1),
+                  minHeight: 32,
+                  backgroundColor: colorScheme.outline.withValues(alpha: 0.3),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    colorScheme.primary,
+                  ),
+                ),
+                Text(
+                  'LKR ${formatWithSeparator(project.budgetCollected)} / ${formatWithSeparator(project.budgetGoal)}',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Contribute button tapped'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Contribute',
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onPrimary,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -588,6 +686,7 @@ class ProjectDetails extends StatelessWidget {
                   ],
                 ),
               ),
+              buildBudgetSection(context, colorScheme, textTheme),
               const SizedBox(height: 16),
             ],
           ),
