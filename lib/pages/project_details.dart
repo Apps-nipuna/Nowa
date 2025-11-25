@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:orsa_3/models/project_model.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
+import 'package:dio/dio.dart';
 import 'package:orsa_3/models/project_team_member.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:orsa_3/models/project_file.dart';
-import 'package:dio/dio.dart';
+import 'package:orsa_3/models/project_task.dart';
 
 @NowaGenerated()
 class ProjectDetails extends StatelessWidget {
@@ -27,6 +28,44 @@ class ProjectDetails extends StatelessWidget {
       buffer.write(chars[i]);
     }
     return buffer.toString();
+  }
+
+  Future<void> downloadFile(
+    BuildContext context,
+    String fileName,
+    String fileUrl,
+  ) async {
+    try {
+      final dio = Dio();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloading: ${fileName}'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+      final fileName_safe = fileName.replaceAll(RegExp('[<>:"/\\\\|?*]'), '_');
+      final filePath = '/tmp/${fileName_safe}';
+      await dio.download(fileUrl, filePath);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloaded: ${fileName}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Download failed: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   Future<List<ProjectTeamMember>> fetchTeamMembers() async {
@@ -56,6 +95,45 @@ class ProjectDetails extends StatelessWidget {
     return (response as List)
         .map((item) => ProjectFile.fromJson(item))
         .toList();
+  }
+
+  Future<List<ProjectTask>> fetchProjectTasks() async {
+    final response = await Supabase.instance.client
+        .from('project_tasks')
+        .select()
+        .eq('project_id', project.id)
+        .order('id', ascending: true);
+    return (response as List)
+        .map((item) => ProjectTask.fromJson(item))
+        .toList();
+  }
+
+  Color getStatusColor(String status, ColorScheme colorScheme) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return colorScheme.primary;
+      case 'in_progress':
+      case 'in progress':
+        return const Color(0xffffa500);
+      case 'pending':
+        return colorScheme.outline;
+      default:
+        return colorScheme.outline;
+    }
+  }
+
+  String getStatusDisplay(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'COMPLETED';
+      case 'in_progress':
+      case 'in progress':
+        return 'IN PROGRESS';
+      case 'pending':
+        return 'PENDING';
+      default:
+        return status.toUpperCase();
+    }
   }
 
   @override
@@ -391,48 +469,82 @@ class ProjectDetails extends StatelessWidget {
                   ],
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Task List',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DataBuilder<List<ProjectTask>>(
+                      future: fetchProjectTasks(),
+                      builder: (context, tasks) {
+                        if (tasks.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'No tasks available',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: tasks.length,
+                          itemBuilder: (context, index) {
+                            final task = tasks[index];
+                            final statusColor = getStatusColor(
+                              task.status,
+                              colorScheme,
+                            );
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      task.taskName,
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurface,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    getStatusDisplay(task.status),
+                                    style: textTheme.labelSmall?.copyWith(
+                                      color: statusColor,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
       ),
     );
-  }
-
-  Future<void> downloadFile(
-    BuildContext context,
-    String fileName,
-    String fileUrl,
-  ) async {
-    try {
-      final dio = Dio();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Downloading: ${fileName}'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      }
-      final fileName_safe = fileName.replaceAll(RegExp('[<>:"/\\\\|?*]'), '_');
-      final filePath = '/tmp/${fileName_safe}';
-      await dio.download(fileUrl, filePath);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Downloaded: ${fileName}'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Download failed: ${e.toString()}'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
   }
 }
