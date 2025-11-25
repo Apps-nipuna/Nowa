@@ -27,6 +27,8 @@ class _ArticleDetailsState extends State<ArticleDetails> {
 
   bool isLoading = true;
 
+  late TextEditingController _commentController;
+
   Future<void> _toggleLike() async {
     try {
       final userId = Supabase.instance.client.auth.currentUser!.id;
@@ -67,12 +69,6 @@ class _ArticleDetailsState extends State<ArticleDetails> {
         ).showSnackBar(SnackBar(content: Text('Error: ${e}')));
       }
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
   }
 
   Future<void> _loadData() async {
@@ -118,6 +114,137 @@ class _ArticleDetailsState extends State<ArticleDetails> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _commentController = TextEditingController();
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _postComment() async {
+    final content = _commentController.text.trim();
+    if (content.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a comment')));
+      return;
+    }
+    try {
+      final userId = Supabase.instance.client.auth.currentUser!.id;
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please sign in to comment')),
+        );
+        return;
+      }
+      await Supabase.instance.client.from('comments').insert({
+        'article_id': widget.articleId,
+        'user_id': userId,
+        'content': content,
+      });
+      _commentController.clear();
+      Navigator.pop(context);
+      if (mounted) {
+        await _loadData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error posting comment: ${e}')));
+      }
+    }
+  }
+
+  void _showCommentBottomSheet() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          top: 16,
+          left: 16,
+          right: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Add a Comment',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _commentController,
+              maxLines: 4,
+              minLines: 2,
+              decoration: InputDecoration(
+                hintText: 'Share your thoughts...',
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                filled: true,
+                fillColor: colorScheme.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                ),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _postComment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Post'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -147,9 +274,9 @@ class _ArticleDetailsState extends State<ArticleDetails> {
                 valueColor: AlwaysStoppedAnimation(colorScheme.primary),
               ),
             )
-          : (((article == null
+          : ((((article == null
                 ? const Center(child: Text('Not found'))
-                : (((SingleChildScrollView(
+                : ((((SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -255,23 +382,28 @@ class _ArticleDetailsState extends State<ArticleDetails> {
                                     ),
                                   ),
                                   Expanded(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.comment_outlined,
-                                          size: 20,
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Comment',
-                                          style: textTheme.bodyMedium?.copyWith(
+                                    child: GestureDetector(
+                                      onTap: _showCommentBottomSheet,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.comment_outlined,
+                                            size: 20,
                                             color: colorScheme.onSurfaceVariant,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Comment',
+                                            style: textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  color: colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                   Expanded(
@@ -391,7 +523,7 @@ class _ArticleDetailsState extends State<ArticleDetails> {
                         ),
                       ],
                     ),
-                  ))))))),
+                  ))))))))),
     );
   }
 }

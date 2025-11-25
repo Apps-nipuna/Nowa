@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:orsa_3/pages/article_details.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 @NowaGenerated()
 class HomePage extends StatefulWidget {
@@ -27,35 +27,6 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
 
   List<String> categories = ['All'];
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchArticles();
-  }
-
-  Future<void> _fetchArticles() async {
-    try {
-      final response = await Supabase.instance.client
-          .from('articles')
-          .select('*')
-          .order('created_at', ascending: false);
-      if (mounted) {
-        setState(() {
-          allArticles = List<Map<String, dynamic>>.from(response);
-          _processArticles();
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-      print('Error fetching articles: ${e}');
-    }
-  }
 
   void _processArticles() {
     Set<String> uniqueCategories = {'All'};
@@ -539,5 +510,50 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchArticles();
+  }
+
+  Future<void> _fetchArticles() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('articles')
+          .select('*, likes(id), comments(id)')
+          .order('created_at', ascending: false);
+      if (mounted) {
+        setState(() {
+          allArticles = List<Map<String, dynamic>>.from(response).map((
+            article,
+          ) {
+            final likes = article['likes'] as List? ?? [];
+            final comments = article['comments'] as List? ?? [];
+            article['like_count'] = likes.length;
+            article['comment_count'] = comments.length;
+            article.remove('likes');
+            article.remove('comments');
+            return article;
+          }).toList();
+          _processArticles();
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching articles: ${e}');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load articles: ${e}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }
