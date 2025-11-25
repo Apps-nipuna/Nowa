@@ -27,6 +27,48 @@ class _ArticleDetailsState extends State<ArticleDetails> {
 
   bool isLoading = true;
 
+  Future<void> _toggleLike() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser!.id;
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please sign in to like articles')),
+        );
+        return;
+      }
+      if (isLiked) {
+        await Supabase.instance.client
+            .from('likes')
+            .delete()
+            .eq('article_id', widget.articleId)
+            .eq('user_id', userId);
+        if (mounted) {
+          setState(() {
+            isLiked = false;
+            likeCount--;
+          });
+        }
+      } else {
+        await Supabase.instance.client.from('likes').insert({
+          'article_id': widget.articleId,
+          'user_id': userId,
+        });
+        if (mounted) {
+          setState(() {
+            isLiked = true;
+            likeCount++;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e}')));
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +77,7 @@ class _ArticleDetailsState extends State<ArticleDetails> {
 
   Future<void> _loadData() async {
     try {
+      final userId = Supabase.instance.client.auth.currentUser!.id;
       final article = await Supabase.instance.client
           .from('articles')
           .select('*')
@@ -49,11 +92,21 @@ class _ArticleDetailsState extends State<ArticleDetails> {
           .from('likes')
           .select('id')
           .eq('article_id', widget.articleId);
+      bool userLiked = false;
+      if (userId != null) {
+        final userLike = await Supabase.instance.client
+            .from('likes')
+            .select('id')
+            .eq('article_id', widget.articleId)
+            .eq('user_id', userId);
+        userLiked = userLike.isNotEmpty;
+      }
       if (mounted) {
         setState(() {
           this.article = article;
           this.comments = List<Map<String, dynamic>>.from(comments);
           likeCount = likes.length;
+          isLiked = userLiked;
           isLoading = false;
         });
       }
@@ -94,9 +147,9 @@ class _ArticleDetailsState extends State<ArticleDetails> {
                 valueColor: AlwaysStoppedAnimation(colorScheme.primary),
               ),
             )
-          : (article == null
+          : (((article == null
                 ? const Center(child: Text('Not found'))
-                : (SingleChildScrollView(
+                : (((SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -168,23 +221,37 @@ class _ArticleDetailsState extends State<ArticleDetails> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.thumb_up_outlined,
-                                          size: 20,
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Like',
-                                          style: textTheme.bodyMedium?.copyWith(
-                                            color: colorScheme.onSurfaceVariant,
+                                    child: GestureDetector(
+                                      onTap: _toggleLike,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            isLiked
+                                                ? Icons.thumb_up
+                                                : Icons.thumb_up_outlined,
+                                            size: 20,
+                                            color: isLiked
+                                                ? colorScheme.primary
+                                                : colorScheme.onSurfaceVariant,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Like',
+                                            style: textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  color: isLiked
+                                                      ? colorScheme.primary
+                                                      : colorScheme
+                                                            .onSurfaceVariant,
+                                                  fontWeight: isLiked
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                   Expanded(
@@ -324,7 +391,7 @@ class _ArticleDetailsState extends State<ArticleDetails> {
                         ),
                       ],
                     ),
-                  ))),
+                  ))))))),
     );
   }
 }
