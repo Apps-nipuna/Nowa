@@ -3,6 +3,8 @@ import 'package:orsa_3/models/project_model.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:orsa_3/models/project_team_member.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/models/project_file.dart';
+import 'package:dio/dio.dart';
 
 @NowaGenerated()
 class ProjectDetails extends StatelessWidget {
@@ -44,6 +46,16 @@ class ProjectDetails extends StatelessWidget {
         avatarUrl: profile?['avatar_url'] as String?,
       );
     }).toList();
+  }
+
+  Future<List<ProjectFile>> fetchProjectFiles() async {
+    final response = await Supabase.instance.client
+        .from('project_files')
+        .select()
+        .eq('project_id', project.id);
+    return (response as List)
+        .map((item) => ProjectFile.fromJson(item))
+        .toList();
   }
 
   @override
@@ -285,10 +297,142 @@ class ProjectDetails extends StatelessWidget {
                   ],
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Project Files',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DataBuilder<List<ProjectFile>>(
+                      future: fetchProjectFiles(),
+                      builder: (context, files) {
+                        if (files.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'No files available',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: files.length,
+                          itemBuilder: (context, index) {
+                            final file = files[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: colorScheme.outline.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.file_present,
+                                    color: colorScheme.primary,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      file.fileName,
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurface,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  GestureDetector(
+                                    onTap: () {
+                                      downloadFile(
+                                        context,
+                                        file.fileName,
+                                        file.fileUrl,
+                                      );
+                                    },
+                                    child: Text(
+                                      'Download',
+                                      style: textTheme.labelMedium?.copyWith(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> downloadFile(
+    BuildContext context,
+    String fileName,
+    String fileUrl,
+  ) async {
+    try {
+      final dio = Dio();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloading: ${fileName}'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+      final fileName_safe = fileName.replaceAll(RegExp('[<>:"/\\\\|?*]'), '_');
+      final filePath = '/tmp/${fileName_safe}';
+      await dio.download(fileUrl, filePath);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloaded: ${fileName}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Download failed: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 }
