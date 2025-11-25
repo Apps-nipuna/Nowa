@@ -1,17 +1,25 @@
 {
     "android": {
         "androidManifest": {
-            "permissionSection": {},
-            "inApplicationSection": {},
-            "inActivitySection": {}
+            "permissionSection": {
+                "Camera": "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+                "Microphone": "<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
+                "Read Storage": "<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>",
+                "Write Storage": "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>"
+            }
         },
-        "rootBuildGradle": {},
         "appBuildGradle": {},
         "settingsGradle": {}
     },
     "iOS": {
         "infoPlist": {
-            "inDictSection": {}
+            "inDictSection": {
+                "NSCameraUsageDescription": "<key>NSCameraUsageDescription</key>\n    <string>Camera permission is required to take photos and videos.</string>",
+                "NSPhotoLibraryUsageDescription": "<key>NSPhotoLibraryUsageDescription</key>\n    <string>Photo Library permission is required to access photos and videos.</string>",
+                "NSPhotoLibraryAddUsageDescription": "<key>NSPhotoLibraryAddUsageDescription</key>\n    <string>Photo Library Add permission is required to save photos and videos.</string>",
+                "UIBackgroundModes": "<key>UIBackgroundModes</key>\n    <array>\n        <string>fetch</string>\n        <string>remote-notification</string>\n    </array>",
+                "NSMicrophoneUsageDescription": "<key>NSMicrophoneUsageDescription</key>\n    <string>Microphone permission is required to record audio.</string>"
+            }
         },
         "podFile": {},
         "appDelegateSwift": {}

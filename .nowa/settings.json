@@ -4,7 +4,15 @@
         "name": "orsa_3",
         "package_name": "com.example.orsa3"
     },
-    "main": {},
+    "main": [
+        {
+            "key": "supabase",
+            "statement": "await SupabaseService().initialize();",
+            "imports": [
+                "package:orsa_3/integrations/supabase_service.dart"
+            ]
+        }
+    ],
     "experimental": {
         "load_packages": true
     }
