@@ -234,15 +234,27 @@ class ProjectCard extends StatelessWidget {
                         const SizedBox(height: 6),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: LinearProgressIndicator(
-                            value: tasksProgress.clamp(0, 1),
-                            minHeight: 8,
-                            backgroundColor: colorScheme.outline.withValues(
-                              alpha: 0.3,
-                            ),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              colorScheme.secondary,
-                            ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              LinearProgressIndicator(
+                                value: tasksProgress.clamp(0, 1),
+                                minHeight: 32,
+                                backgroundColor: colorScheme.outline.withValues(
+                                  alpha: 0.3,
+                                ),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  colorScheme.secondary,
+                                ),
+                              ),
+                              Text(
+                                '${project.completedTasks ?? 0} / ${project.totalTasks ?? 0}',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
