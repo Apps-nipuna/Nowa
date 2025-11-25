@@ -6,6 +6,8 @@ import 'package:orsa_3/models/project_team_member.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:orsa_3/models/project_file.dart';
 import 'package:orsa_3/models/project_task.dart';
+import 'package:orsa_3/models/project_contributor.dart';
+import 'package:orsa_3/components/contributors_section.dart';
 
 @NowaGenerated()
 class ProjectDetails extends StatelessWidget {
@@ -13,22 +15,6 @@ class ProjectDetails extends StatelessWidget {
   const ProjectDetails({required this.project, super.key});
 
   final ProjectModel project;
-
-  String formatWithSeparator(double? value) {
-    if (value == null) {
-      return '0';
-    }
-    final formatted = value!.toStringAsFixed(0);
-    final buffer = StringBuffer();
-    final chars = formatted.split('');
-    for (int i = 0; i < chars.length; i++) {
-      if (i > 0 && (chars.length - i) % 3 == 0) {
-        buffer.write(',');
-      }
-      buffer.write(chars[i]);
-    }
-    return buffer.toString();
-  }
 
   Future<void> downloadFile(
     BuildContext context,
@@ -97,17 +83,6 @@ class ProjectDetails extends StatelessWidget {
         .toList();
   }
 
-  Future<List<ProjectTask>> fetchProjectTasks() async {
-    final response = await Supabase.instance.client
-        .from('project_tasks')
-        .select()
-        .eq('project_id', project.id)
-        .order('id', ascending: true);
-    return (response as List)
-        .map((item) => ProjectTask.fromJson(item))
-        .toList();
-  }
-
   Color getStatusColor(String status, ColorScheme colorScheme) {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -134,6 +109,55 @@ class ProjectDetails extends StatelessWidget {
       default:
         return status.toUpperCase();
     }
+  }
+
+  String formatWithSeparator(double? value) {
+    if (value == null) {
+      return '0';
+    }
+    final formatted = value!.toStringAsFixed(0);
+    final buffer = StringBuffer();
+    final chars = formatted.split('');
+    for (int i = 0; i < chars.length; i++) {
+      if (i > 0 && (chars.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(chars[i]);
+    }
+    return buffer.toString();
+  }
+
+  Future<List<ProjectTask>> fetchProjectTasks() async {
+    final response = await Supabase.instance.client
+        .from('project_tasks')
+        .select()
+        .eq('project_id', project.id)
+        .order('id', ascending: true);
+    return (response as List)
+        .map((item) => ProjectTask.fromJson(item))
+        .toList();
+  }
+
+  Future<List<ProjectContributor>> fetchContributors() async {
+    final response = await Supabase.instance.client
+        .from('project_contributions')
+        .select('*, profiles(common_name, avatar_url)')
+        .eq('project_id', project.id)
+        .order('contribution_date', ascending: false);
+    return (response as List).map((item) {
+      final profile = item['profiles'] as Map<String, dynamic>?;
+      return ProjectContributor(
+        id: item['id'] as int,
+        projectId: item['project_id'] as int,
+        userId: item['user_id'] as String,
+        amount: (item['amount'] as num).toDouble(),
+        contributionDate: item['contribution_date'] as String?,
+        phoneNumber: item['phone_number'] as String?,
+        status: item['status'] as String?,
+        commonName: profile?['common_name'] as String?,
+        avatarUrl: profile?['avatar_url'] as String?,
+      );
+    }).toList();
   }
 
   @override
@@ -536,6 +560,30 @@ class ProjectDetails extends StatelessWidget {
                           },
                         );
                       },
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Contributors',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DataBuilder<List<ProjectContributor>>(
+                      future: fetchContributors(),
+                      builder: (context, contributors) => ContributorsSection(
+                        contributors: contributors,
+                        textTheme: textTheme,
+                        colorScheme: colorScheme,
+                      ),
                     ),
                   ],
                 ),
