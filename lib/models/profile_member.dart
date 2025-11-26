@@ -8,6 +8,9 @@ class ProfileMember {
     this.commonName,
     this.avatarUrl,
     this.position,
+    this.address,
+    this.phone,
+    this.troupNo,
   });
 
   factory ProfileMember.fromJson(Map<String, dynamic> json) {
@@ -17,6 +20,9 @@ class ProfileMember {
       commonName: json['common_name'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       position: json['position'] as String?,
+      address: json['address'] as String?,
+      phone: json['phone'] as String?,
+      troupNo: json['troup_no'] as String?,
     );
   }
 
@@ -29,4 +35,10 @@ class ProfileMember {
   final String? avatarUrl;
 
   final String? position;
+
+  final String? address;
+
+  final String? phone;
+
+  final String? troupNo;
 }

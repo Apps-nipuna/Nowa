@@ -243,7 +243,10 @@ class _MembersState extends State<Members> {
                       itemCount: snapshot.data?.length,
                       itemBuilder: (context, index) {
                         final member = snapshot.data![index];
-                        return _MemberCard(member: member);
+                        return _MemberCard(
+                          member: member,
+                          onViewPressed: _showMemberDetails,
+                        );
                       },
                     ),
                   );
@@ -273,12 +276,158 @@ class _MembersState extends State<Members> {
       ),
     );
   }
+
+  void _showMemberDetails(ProfileMember member) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 3,
+                      ),
+                    ),
+                    child: member.avatarUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              member.avatarUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (c, e, s) => Container(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primaryContainer,
+                                child: Icon(
+                                  Icons.person,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 50,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer,
+                            child: Icon(
+                              Icons.person,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 50,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    member.commonName ?? 'Member',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (member.fullName != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        member.fullName!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  if (member.address != null && member.address!.isNotEmpty)
+                    _buildDetailRow(
+                      Icons.location_on,
+                      'Address',
+                      member.address!,
+                    ),
+                  if (member.address != null && member.address!.isNotEmpty)
+                    const SizedBox(height: 16),
+                  if (member.phone != null && member.phone!.isNotEmpty)
+                    _buildDetailRow(Icons.phone, 'Phone Number', member.phone!),
+                  if (member.phone != null && member.phone!.isNotEmpty)
+                    const SizedBox(height: 16),
+                  if (member.troupNo != null && member.troupNo!.isNotEmpty)
+                    _buildDetailRow(Icons.badge, 'Troop No', member.troupNo!),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 @NowaGenerated()
 class _CommitteeMemberCard extends StatelessWidget {
   @NowaGenerated({'loader': 'auto-constructor'})
-  const _CommitteeMemberCard({required this.member});
+  const _CommitteeMemberCard({required this.member, super.key});
 
   final CommitteeMemberView member;
 
@@ -352,9 +501,15 @@ class _CommitteeMemberCard extends StatelessWidget {
 @NowaGenerated()
 class _MemberCard extends StatelessWidget {
   @NowaGenerated({'loader': 'auto-constructor'})
-  const _MemberCard({required this.member});
+  const _MemberCard({
+    required this.member,
+    required this.onViewPressed,
+    super.key,
+  });
 
   final ProfileMember member;
+
+  final Function(ProfileMember) onViewPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -403,31 +558,19 @@ class _MemberCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  member.commonName ?? member.fullName ?? 'Member',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (member.position != null)
-                  Text(
-                    member.position!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
+            child: Text(
+              member.commonName ?? member.fullName ?? 'Member',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              onViewPressed(member);
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
