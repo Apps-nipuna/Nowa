@@ -311,6 +311,42 @@ class _EventsState extends State<Events> {
     );
   }
 
+  String _getMonthName(int month) {
+    const months = const [
+      'JANUARY',
+      'FEBRUARY',
+      'MARCH',
+      'APRIL',
+      'MAY',
+      'JUNE',
+      'JULY',
+      'AUGUST',
+      'SEPTEMBER',
+      'OCTOBER',
+      'NOVEMBER',
+      'DECEMBER',
+    ];
+    return months[month - 1];
+  }
+
+  String _formatDateLabel(DateTime date) {
+    const months = const [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${date.day} ${months[date.month - 1]}';
+  }
+
   Widget _buildCalendarGrid(List<EventModel> events) {
     final firstDay = DateTime(_selectedDate.year, _selectedDate.month, 1);
     final lastDay = DateTime(_selectedDate.year, _selectedDate.month + 1, 0);
@@ -375,8 +411,17 @@ class _EventsState extends State<Events> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
+                      : hasEvent
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer.withValues(alpha: 0.5)
                       : Colors.transparent,
                   border: isSelected
+                      ? Border.all(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 2,
+                        )
+                      : hasEvent
                       ? Border.all(
                           color: Theme.of(context).colorScheme.primary,
                           width: 2,
@@ -385,32 +430,15 @@ class _EventsState extends State<Events> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        dayNumber.toString(),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.onPrimary
-                              : (dayNumber <= 1 || index % 7 == 6)
-                              ? Theme.of(context).colorScheme.error
-                              : Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      if (hasEvent)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Theme.of(context).colorScheme.onPrimary
-                                : Theme.of(context).colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
+                  child: Text(
+                    dayNumber.toString(),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : (dayNumber <= 1 || index % 7 == 6)
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ),
               ),
@@ -419,41 +447,5 @@ class _EventsState extends State<Events> {
         ),
       ],
     );
-  }
-
-  String _getMonthName(int month) {
-    const months = const [
-      'JANUARY',
-      'FEBRUARY',
-      'MARCH',
-      'APRIL',
-      'MAY',
-      'JUNE',
-      'JULY',
-      'AUGUST',
-      'SEPTEMBER',
-      'OCTOBER',
-      'NOVEMBER',
-      'DECEMBER',
-    ];
-    return months[month - 1];
-  }
-
-  String _formatDateLabel(DateTime date) {
-    const months = const [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${date.day} ${months[date.month - 1]}';
   }
 }
