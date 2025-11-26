@@ -49,6 +49,16 @@
             "deps": [
                 "lib/pages/events.dart"
             ]
+        },
+        {
+            "x": 2286,
+            "y": 200,
+            "w": 393,
+            "h": 808,
+            "widget": "const Members()",
+            "deps": [
+                "lib/pages/members.dart"
+            ]
         }
     ]
 }
