@@ -715,7 +715,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
         throw Exception('User not authenticated');
       }
       final bytes = await image?.readAsBytes();
-      if (bytes.isEmpty) {
+      if (bytes == null || bytes.isEmpty) {
         throw Exception('Failed to read image');
       }
       final fileName =
