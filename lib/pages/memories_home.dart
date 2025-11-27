@@ -60,42 +60,6 @@ class _MemoriesHomeState extends State<MemoriesHome> {
         .toList();
   }
 
-  String _getTimeAgo(String? createdAt) {
-    if (createdAt == null) {
-      return 'Recently';
-    }
-    try {
-      final createdDate = DateTime.parse(createdAt!);
-      final now = DateTime.now();
-      final difference = now.difference(createdDate);
-      if (difference.inDays > 365) {
-        final years = (difference.inDays / 365).floor();
-        return '${years} year${years > 1 ? 's' : ''} ago';
-      } else {
-        if (difference.inDays > 30) {
-          final months = (difference.inDays / 30).floor();
-          return '${months} month${months > 1 ? 's' : ''} ago';
-        } else {
-          if (difference.inDays > 0) {
-            return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
-          } else {
-            if (difference.inHours > 0) {
-              return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
-            } else {
-              if (difference.inMinutes > 0) {
-                return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
-              } else {
-                return 'Just now';
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      return 'Recently';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -195,16 +159,131 @@ class _MemoriesHomeState extends State<MemoriesHome> {
       ),
     );
   }
+
+  String _getTimeAgo(String? createdAt) {
+    if (createdAt == null) {
+      return 'Recently';
+    }
+    try {
+      final createdDate = DateTime.parse(createdAt!);
+      final now = DateTime.now();
+      final difference = now.difference(createdDate);
+      if (difference.inDays > 365) {
+        final years = (difference.inDays / 365).floor();
+        return '${years} year${years > 1 ? 's' : ''} ago';
+      } else {
+        if (difference.inDays > 30) {
+          final months = (difference.inDays / 30).floor();
+          return '${months} month${months > 1 ? 's' : ''} ago';
+        } else {
+          if (difference.inDays > 0) {
+            return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+          } else {
+            if (difference.inHours > 0) {
+              return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+            } else {
+              if (difference.inMinutes > 0) {
+                return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+              } else {
+                return 'Just now';
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      return 'Recently';
+    }
+  }
 }
 
 @NowaGenerated()
-class _GalleryCard extends StatelessWidget {
+class _GalleryCard extends StatefulWidget {
   @NowaGenerated({'loader': 'auto-constructor'})
   const _GalleryCard({required this.gallery, required this.timeAgo, super.key});
 
   final Gallery gallery;
 
   final String timeAgo;
+
+  @override
+  State<_GalleryCard> createState() {
+    return _GalleryCardState();
+  }
+}
+
+@NowaGenerated()
+class _GalleryCardState extends State<_GalleryCard> {
+  late bool isLiked;
+
+  late int likeCount;
+
+  @override
+  void initState() {
+    super.initState();
+    isLiked = false;
+    likeCount = widget.gallery.likeCount ?? 0;
+    _checkIfLiked();
+  }
+
+  Future<void> _checkIfLiked() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser!.id;
+      if (userId == null) {
+        return;
+      }
+      final response = await Supabase.instance.client
+          .from('gallery_likes')
+          .select()
+          .eq('user_id', userId)
+          .eq('gallery_id', widget.gallery.id);
+      setState(() {
+        isLiked = response.isNotEmpty;
+      });
+    } catch (e) {
+      print('Error checking if liked: ${e}');
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser!.id;
+      if (userId == null) {
+        return;
+      }
+      if (isLiked) {
+        await Supabase.instance.client
+            .from('gallery_likes')
+            .delete()
+            .eq('user_id', userId)
+            .eq('gallery_id', widget.gallery.id);
+        await Supabase.instance.client
+            .from('galleries')
+            .update({'like_count': likeCount - 1})
+            .eq('id', widget.gallery.id);
+        setState(() {
+          isLiked = false;
+          likeCount--;
+        });
+      } else {
+        await Supabase.instance.client.from('gallery_likes').insert({
+          'user_id': userId,
+          'gallery_id': widget.gallery.id,
+          'created_at': DateTime.now().toIso8601String(),
+        });
+        await Supabase.instance.client
+            .from('galleries')
+            .update({'like_count': likeCount + 1})
+            .eq('id', widget.gallery.id);
+        setState(() {
+          isLiked = true;
+          likeCount++;
+        });
+      }
+    } catch (e) {
+      print('Error toggling like: ${e}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -233,35 +312,64 @@ class _GalleryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (gallery.coverImageUrl != null)
-                Container(
-                  width: double.infinity,
-                  height: 200,
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  child: Image.network(
-                    gallery.coverImageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+              Stack(
+                children: [
+                  if (widget.gallery.coverImageUrl != null)
+                    Container(
+                      width: double.infinity,
+                      height: 200,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      child: Image.network(
+                        widget.gallery.coverImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 48,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: double.infinity,
+                      height: 200,
                       color: Theme.of(context).colorScheme.primaryContainer,
                       child: Icon(
-                        Icons.image_not_supported,
+                        Icons.image,
                         color: Theme.of(context).colorScheme.primary,
                         size: 48,
                       ),
                     ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: GestureDetector(
+                      onTap: _toggleLike,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surface.withValues(alpha: 0.9),
+                          shape: BoxShape.circle,
+                        ),
+                        padding: const EdgeInsets.all(8),
+                        child: Icon(
+                          isLiked ? Icons.favorite : Icons.favorite_border,
+                          size: 20,
+                          color: isLiked
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
                   ),
-                )
-              else
-                Container(
-                  width: double.infinity,
-                  height: 200,
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.image,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 48,
-                  ),
-                ),
+                ],
+              ),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -273,7 +381,7 @@ class _GalleryCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            gallery.name,
+                            widget.gallery.name,
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.bold),
                             maxLines: 2,
@@ -282,7 +390,7 @@ class _GalleryCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          timeAgo,
+                          widget.timeAgo,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Theme.of(
@@ -292,12 +400,12 @@ class _GalleryCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (gallery.description != null &&
-                        gallery.description!.isNotEmpty)
+                    if (widget.gallery.description != null &&
+                        widget.gallery.description!.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
-                          gallery.description!,
+                          widget.gallery.description!,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: Theme.of(
@@ -322,7 +430,7 @@ class _GalleryCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                '${gallery.photoCount ?? 0} photos',
+                                '${widget.gallery.photoCount ?? 0} photos',
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: Theme.of(
@@ -341,7 +449,7 @@ class _GalleryCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                '${gallery.likeCount ?? 0} likes',
+                                '${likeCount} likes',
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: Theme.of(

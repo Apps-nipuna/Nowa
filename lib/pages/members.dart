@@ -217,15 +217,6 @@ class _MembersState extends State<Members> {
         .toList();
   }
 
-  List<int> _getAvailableYears() {
-    final currentYear = DateTime.now().year;
-    final years = [];
-    for (int year = 1978; year <= currentYear + 2; year++) {
-      years.add(year);
-    }
-    return years.reversed.toList();
-  }
-
   List<ProfileMember> _filterMembers(List<ProfileMember> members) {
     if (searchQuery.isEmpty) {
       return members;
@@ -608,5 +599,14 @@ class _MembersState extends State<Members> {
         ),
       ],
     );
+  }
+
+  List<int> _getAvailableYears() {
+    final currentYear = DateTime.now().year;
+    final List<int> years = [];
+    for (int year = 1978; year <= currentYear + 2; year++) {
+      years.add(year);
+    }
+    return years.reversed.toList();
   }
 }
