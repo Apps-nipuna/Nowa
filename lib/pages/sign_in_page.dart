@@ -4,6 +4,7 @@ import 'package:orsa_3/pages/forgot_password_page.dart';
 import 'package:orsa_3/pages/create_account_page.dart';
 import 'package:orsa_3/integrations/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/pages/main_navigation_page.dart';
 
 @NowaGenerated()
 class SignInPage extends StatefulWidget {
@@ -307,16 +308,30 @@ class _SignInPageState extends State<SignInPage> {
       if (mounted) {
         final user = Supabase.instance.client.auth.currentUser;
         if (user != null) {
-          final response = await Supabase.instance.client
-              .from('profiles')
-              .select('common_name')
-              .eq('id', user!.id)
-              .single();
-          final commonName = response['common_name'];
-          if (commonName == null || commonName.toString().isEmpty) {
-            Navigator.pushReplacementNamed(context, 'CompleteProfile');
-          } else {
-            Navigator.pushReplacementNamed(context, 'MainNavigationPage');
+          try {
+            final response = await Supabase.instance.client
+                .from('profiles')
+                .select('common_name')
+                .eq('id', user!.id)
+                .single();
+            final commonName = response['common_name'];
+            if (commonName == null || commonName.toString().isEmpty) {
+              if (mounted) {
+                Navigator.of(context).pushReplacementNamed('CompleteProfile');
+              }
+            } else {
+              if (mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const MainNavigationPage(),
+                  ),
+                );
+              }
+            }
+          } catch (profileError) {
+            setState(() {
+              _errorMessage = 'Error loading profile: ${profileError}';
+            });
           }
         }
       }
