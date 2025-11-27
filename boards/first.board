@@ -59,6 +59,16 @@
             "deps": [
                 "lib/pages/members.dart"
             ]
+        },
+        {
+            "x": 76,
+            "y": 1059,
+            "w": 393,
+            "h": 808,
+            "widget": "const MemoriesHome()",
+            "deps": [
+                "lib/pages/memories_home.dart"
+            ]
         }
     ]
 }
