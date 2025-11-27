@@ -46,18 +46,6 @@ class _HomePageState extends State<HomePage> {
     _filterArticles();
   }
 
-  void _filterArticles() {
-    if (selectedCategory == 'All') {
-      filteredArticles = List.from(allArticles).take(15).toList();
-    } else {
-      filteredArticles = allArticles
-          .where((article) => article['category'] == selectedCategory)
-          .toList()
-          .take(15)
-          .toList();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -554,6 +542,20 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       }
+    }
+  }
+
+  void _filterArticles() {
+    if (selectedCategory == 'All') {
+      filteredArticles = (allArticles.cast<Map<String, dynamic>>())
+          .take(15)
+          .toList();
+    } else {
+      filteredArticles = allArticles
+          .where((article) => article['category'] == selectedCategory)
+          .toList()
+          .take(15)
+          .toList();
     }
   }
 }

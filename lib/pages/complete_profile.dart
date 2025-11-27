@@ -715,6 +715,9 @@ class _CompleteProfileState extends State<CompleteProfile> {
         throw Exception('User not authenticated');
       }
       final bytes = await image?.readAsBytes();
+      if (bytes.isEmpty) {
+        throw Exception('Failed to read image');
+      }
       final fileName =
           'avatar_${user?.id}_${DateTime.now().millisecondsSinceEpoch}';
       await Supabase.instance.client.storage

@@ -41,10 +41,10 @@ class ProjectCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final budgetProgress = project.budgetGoal != null && project.budgetGoal! > 0
-        ? (project.budgetCollected ?? 0) / project.budgetGoal!
+        ? ((project.budgetCollected ?? 0) / project.budgetGoal!).toDouble()
         : 0;
     final tasksProgress = project.totalTasks != null && project.totalTasks! > 0
-        ? (project.completedTasks ?? 0) / project.totalTasks!
+        ? ((project.completedTasks ?? 0) / project.totalTasks!).toDouble()
         : 0;
     return GestureDetector(
       onTap: () {
