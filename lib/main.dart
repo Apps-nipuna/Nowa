@@ -7,7 +7,7 @@ import 'package:orsa_3/globals/app_state.dart';
 import 'package:orsa_3/pages/complete_profile.dart';
 import 'package:orsa_3/pages/create_account_page.dart';
 import 'package:orsa_3/pages/forgot_password_page.dart';
-import 'package:orsa_3/pages/home_page.dart';
+import 'package:orsa_3/pages/main_navigation_page.dart';
 import 'package:orsa_3/pages/sign_in_page.dart';
 
 @NowaGenerated()
@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
           'CompleteProfile': (context) => const CompleteProfile(),
           'CreateAccountPage': (context) => const CreateAccountPage(),
           'ForgotPasswordPage': (context) => const ForgotPasswordPage(),
-          'HomePage': (context) => const HomePage(),
+          'MainNavigationPage': (context) => const MainNavigationPage(),
           'SignInPage': (context) => const SignInPage(),
         },
       ),

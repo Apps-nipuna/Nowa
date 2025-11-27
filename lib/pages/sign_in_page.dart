@@ -316,7 +316,7 @@ class _SignInPageState extends State<SignInPage> {
           if (commonName == null || commonName.toString().isEmpty) {
             Navigator.pushReplacementNamed(context, 'CompleteProfile');
           } else {
-            Navigator.pushReplacementNamed(context, 'HomePage');
+            Navigator.pushReplacementNamed(context, 'MainNavigationPage');
           }
         }
       }
