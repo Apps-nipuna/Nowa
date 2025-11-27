@@ -197,7 +197,7 @@ class ProjectCard extends StatelessWidget {
                               alignment: Alignment.center,
                               children: [
                                 LinearProgressIndicator(
-                                  value: budgetProgress.clamp(0, 1),
+                                  value: (budgetProgress as double).clamp(0, 1),
                                   minHeight: 32,
                                   backgroundColor: colorScheme.outline
                                       .withValues(alpha: 0.3),
@@ -247,7 +247,7 @@ class ProjectCard extends StatelessWidget {
                               alignment: Alignment.center,
                               children: [
                                 LinearProgressIndicator(
-                                  value: tasksProgress.clamp(0, 1),
+                                  value: (tasksProgress as double).clamp(0, 1),
                                   minHeight: 32,
                                   backgroundColor: colorScheme.outline
                                       .withValues(alpha: 0.3),
