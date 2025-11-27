@@ -16,12 +16,178 @@ class Members extends StatefulWidget {
 }
 
 @NowaGenerated()
+class _CommitteeMemberCard extends StatelessWidget {
+  @NowaGenerated({'loader': 'auto-constructor'})
+  const _CommitteeMemberCard({required this.member, super.key});
+
+  final CommitteeMemberView member;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 120,
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary,
+                width: 3,
+              ),
+            ),
+            child: member.avatarUrl != null
+                ? ClipOval(
+                    child: Image.network(
+                      member.avatarUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        child: Icon(
+                          Icons.person,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 40,
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: Icon(
+                      Icons.person,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 40,
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            member.position,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            member.commonName,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+@NowaGenerated()
+class _MemberCard extends StatelessWidget {
+  @NowaGenerated({'loader': 'auto-constructor'})
+  const _MemberCard({
+    required this.member,
+    required this.onViewPressed,
+    super.key,
+  });
+
+  final ProfileMember member;
+
+  final Function(ProfileMember) onViewPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            child: member.avatarUrl != null
+                ? ClipOval(
+                    child: Image.network(
+                      member.avatarUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        child: Icon(
+                          Icons.person,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: Icon(
+                      Icons.person,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 24,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              member.commonName ?? member.fullName ?? 'Member',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              onViewPressed(member);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: Text(
+              'View',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+@NowaGenerated()
 class _MembersState extends State<Members> {
   late Future<List<CommitteeMemberView>> committeeFuture;
 
   late Future<List<ProfileMember>> membersFuture;
 
   late int selectedYear;
+
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -58,6 +224,21 @@ class _MembersState extends State<Members> {
       years.add(year);
     }
     return years.reversed.toList();
+  }
+
+  List<ProfileMember> _filterMembers(List<ProfileMember> members) {
+    if (searchQuery.isEmpty) {
+      return members;
+    }
+    final query = searchQuery.toLowerCase();
+    return members
+        .where(
+          (member) =>
+              (member.commonName?.toLowerCase().contains(query) ?? false) ||
+              (member.fullName?.toLowerCase().contains(query) ?? false) ||
+              (member.troupNo?.toLowerCase().contains(query) ?? false),
+        )
+        .toList();
   }
 
   @override
@@ -100,6 +281,11 @@ class _MembersState extends State<Members> {
                             vertical: 12,
                           ),
                         ),
+                        onChanged: (value) {
+                          setState(() {
+                            searchQuery = value;
+                          });
+                        },
                       ),
                     ),
                   ],
@@ -235,14 +421,15 @@ class _MembersState extends State<Members> {
                       child: Text('No members found'),
                     );
                   }
+                  final filteredMembers = _filterMembers(snapshot.data!);
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: snapshot.data?.length,
+                      itemCount: filteredMembers.length,
                       itemBuilder: (context, index) {
-                        final member = snapshot.data![index];
+                        final member = filteredMembers[index];
                         return _MemberCard(
                           member: member,
                           onViewPressed: _showMemberDetails,
@@ -420,170 +607,6 @@ class _MembersState extends State<Members> {
           ),
         ),
       ],
-    );
-  }
-}
-
-@NowaGenerated()
-class _CommitteeMemberCard extends StatelessWidget {
-  @NowaGenerated({'loader': 'auto-constructor'})
-  const _CommitteeMemberCard({required this.member, super.key});
-
-  final CommitteeMemberView member;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 120,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Theme.of(context).colorScheme.primary,
-                width: 3,
-              ),
-            ),
-            child: member.avatarUrl != null
-                ? ClipOval(
-                    child: Image.network(
-                      member.avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(
-                          Icons.person,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-                  )
-                : Container(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    child: Icon(
-                      Icons.person,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 40,
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            member.position,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            member.commonName,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-@NowaGenerated()
-class _MemberCard extends StatelessWidget {
-  @NowaGenerated({'loader': 'auto-constructor'})
-  const _MemberCard({
-    required this.member,
-    required this.onViewPressed,
-    super.key,
-  });
-
-  final ProfileMember member;
-
-  final Function(ProfileMember) onViewPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Theme.of(context).colorScheme.primary,
-                width: 2,
-              ),
-            ),
-            child: member.avatarUrl != null
-                ? ClipOval(
-                    child: Image.network(
-                      member.avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(
-                          Icons.person,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  )
-                : Container(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    child: Icon(
-                      Icons.person,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 24,
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              member.commonName ?? member.fullName ?? 'Member',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              onViewPressed(member);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            child: Text(
-              'View',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
