@@ -69,6 +69,16 @@
             "deps": [
                 "lib/pages/memories_home.dart"
             ]
+        },
+        {
+            "x": 500,
+            "y": 1059,
+            "w": 393,
+            "h": 808,
+            "widget": "const MyProfile()",
+            "deps": [
+                "lib/pages/my_profile.dart"
+            ]
         }
     ]
 }
