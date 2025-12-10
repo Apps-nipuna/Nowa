@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:orsa_3/models/committee_member_view.dart';
-import 'package:orsa_3/models/profile_member.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
+import 'package:orsa_3/models/committee_member_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/models/profile_member.dart';
 
 @NowaGenerated()
 class Members extends StatefulWidget {
@@ -189,12 +189,7 @@ class _MembersState extends State<Members> {
 
   String searchQuery = '';
 
-  @override
-  void initState() {
-    super.initState();
-    selectedYear = DateTime.now().year;
-    _loadData();
-  }
+  bool canCreateContent = false;
 
   void _loadData() {
     committeeFuture = _fetchCommitteeMembers();
@@ -230,6 +225,194 @@ class _MembersState extends State<Members> {
               (member.troupNo?.toLowerCase().contains(query) ?? false),
         )
         .toList();
+  }
+
+  void _showMemberDetails(ProfileMember member) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 3,
+                      ),
+                    ),
+                    child: member.avatarUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              member.avatarUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (c, e, s) => Container(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primaryContainer,
+                                child: Icon(
+                                  Icons.person,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 50,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer,
+                            child: Icon(
+                              Icons.person,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 50,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    member.commonName ?? 'Member',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (member.fullName != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        member.fullName!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  if (member.address != null && member.address!.isNotEmpty)
+                    _buildDetailRow(
+                      Icons.location_on,
+                      'Address',
+                      member.address!,
+                    ),
+                  if (member.address != null && member.address!.isNotEmpty)
+                    const SizedBox(height: 16),
+                  if (member.phone != null && member.phone!.isNotEmpty)
+                    _buildDetailRow(Icons.phone, 'Phone Number', member.phone!),
+                  if (member.phone != null && member.phone!.isNotEmpty)
+                    const SizedBox(height: 16),
+                  if (member.troupNo != null && member.troupNo!.isNotEmpty)
+                    _buildDetailRow(Icons.badge, 'Troop No', member.troupNo!),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<int> _getAvailableYears() {
+    final currentYear = DateTime.now().year;
+    final List<int> years = [];
+    for (int year = 1978; year <= currentYear + 2; year++) {
+      years.add(year);
+    }
+    return years.reversed.toList();
+  }
+
+  Future<void> _checkUserPermissions() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final response = await Supabase.instance.client
+            .from('profiles')
+            .select('user_role, position')
+            .eq('id', user!.id)
+            .single();
+        final userRole = response['user_role'] as String? ?? '';
+        final position = response['position'] as String? ?? '';
+        if (mounted) {
+          setState(() {
+            canCreateContent =
+                userRole == 'admin' ||
+                position == 'President' ||
+                position == 'Secretary';
+          });
+        }
+      }
+    } catch (e) {
+      print('Error checking permissions: ${e}');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    selectedYear = DateTime.now().year;
+    _loadData();
+    _checkUserPermissions();
   }
 
   @override
@@ -452,161 +635,23 @@ class _MembersState extends State<Members> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showMemberDetails(ProfileMember member) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(24),
-              topRight: Radius.circular(24),
-            ),
-          ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
+      floatingActionButton: canCreateContent
+          ? FloatingActionButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('New member action'),
+                    duration: Duration(seconds: 2),
                   ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.primary,
-                        width: 3,
-                      ),
-                    ),
-                    child: member.avatarUrl != null
-                        ? ClipOval(
-                            child: Image.network(
-                              member.avatarUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (c, e, s) => Container(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primaryContainer,
-                                child: Icon(
-                                  Icons.person,
-                                  color: Theme.of(context).colorScheme.primary,
-                                  size: 50,
-                                ),
-                              ),
-                            ),
-                          )
-                        : Container(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primaryContainer,
-                            child: Icon(
-                              Icons.person,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 50,
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    member.commonName ?? 'Member',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  if (member.fullName != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        member.fullName!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  const SizedBox(height: 24),
-                  if (member.address != null && member.address!.isNotEmpty)
-                    _buildDetailRow(
-                      Icons.location_on,
-                      'Address',
-                      member.address!,
-                    ),
-                  if (member.address != null && member.address!.isNotEmpty)
-                    const SizedBox(height: 16),
-                  if (member.phone != null && member.phone!.isNotEmpty)
-                    _buildDetailRow(Icons.phone, 'Phone Number', member.phone!),
-                  if (member.phone != null && member.phone!.isNotEmpty)
-                    const SizedBox(height: 16),
-                  if (member.troupNo != null && member.troupNo!.isNotEmpty)
-                    _buildDetailRow(Icons.badge, 'Troop No', member.troupNo!),
-                  const SizedBox(height: 24),
-                ],
+                );
+              },
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Icon(
+                Icons.add,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
-            ),
-          ),
-        ),
-      ),
+            )
+          : null,
     );
-  }
-
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  List<int> _getAvailableYears() {
-    final currentYear = DateTime.now().year;
-    final List<int> years = [];
-    for (int year = 1978; year <= currentYear + 2; year++) {
-      years.add(year);
-    }
-    return years.reversed.toList();
   }
 }

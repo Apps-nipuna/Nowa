@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:orsa_3/models/gallery.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
+import 'package:orsa_3/models/gallery.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 @NowaGenerated()
@@ -20,11 +20,7 @@ class _MemoriesHomeState extends State<MemoriesHome> {
 
   String searchQuery = '';
 
-  @override
-  void initState() {
-    super.initState();
-    _loadGalleries();
-  }
+  bool canCreateContent = false;
 
   void _loadGalleries() {
     galleriesFuture = _fetchGalleries();
@@ -58,6 +54,74 @@ class _MemoriesHomeState extends State<MemoriesHome> {
               (gallery.description?.toLowerCase().contains(query) ?? false),
         )
         .toList();
+  }
+
+  String _getTimeAgo(String? createdAt) {
+    if (createdAt == null) {
+      return 'Recently';
+    }
+    try {
+      final createdDate = DateTime.parse(createdAt!);
+      final now = DateTime.now();
+      final difference = now.difference(createdDate);
+      if (difference.inDays > 365) {
+        final years = (difference.inDays / 365).floor();
+        return '${years} year${years > 1 ? 's' : ''} ago';
+      } else {
+        if (difference.inDays > 30) {
+          final months = (difference.inDays / 30).floor();
+          return '${months} month${months > 1 ? 's' : ''} ago';
+        } else {
+          if (difference.inDays > 0) {
+            return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+          } else {
+            if (difference.inHours > 0) {
+              return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+            } else {
+              if (difference.inMinutes > 0) {
+                return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+              } else {
+                return 'Just now';
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      return 'Recently';
+    }
+  }
+
+  Future<void> _checkUserPermissions() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final response = await Supabase.instance.client
+            .from('profiles')
+            .select('user_role, position')
+            .eq('id', user!.id)
+            .single();
+        final userRole = response['user_role'] as String? ?? '';
+        final position = response['position'] as String? ?? '';
+        if (mounted) {
+          setState(() {
+            canCreateContent =
+                userRole == 'admin' ||
+                position == 'President' ||
+                position == 'Secretary';
+          });
+        }
+      }
+    } catch (e) {
+      print('Error checking permissions: ${e}');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGalleries();
+    _checkUserPermissions();
   }
 
   @override
@@ -157,43 +221,24 @@ class _MemoriesHomeState extends State<MemoriesHome> {
           ],
         ),
       ),
+      floatingActionButton: canCreateContent
+          ? FloatingActionButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('New gallery action'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Icon(
+                Icons.add,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            )
+          : null,
     );
-  }
-
-  String _getTimeAgo(String? createdAt) {
-    if (createdAt == null) {
-      return 'Recently';
-    }
-    try {
-      final createdDate = DateTime.parse(createdAt!);
-      final now = DateTime.now();
-      final difference = now.difference(createdDate);
-      if (difference.inDays > 365) {
-        final years = (difference.inDays / 365).floor();
-        return '${years} year${years > 1 ? 's' : ''} ago';
-      } else {
-        if (difference.inDays > 30) {
-          final months = (difference.inDays / 30).floor();
-          return '${months} month${months > 1 ? 's' : ''} ago';
-        } else {
-          if (difference.inDays > 0) {
-            return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
-          } else {
-            if (difference.inHours > 0) {
-              return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
-            } else {
-              if (difference.inMinutes > 0) {
-                return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
-              } else {
-                return 'Just now';
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      return 'Recently';
-    }
   }
 }
 

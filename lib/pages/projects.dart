@@ -19,6 +19,28 @@ class Projects extends StatelessWidget {
         .toList();
   }
 
+  Future<bool> _checkUserPermissions() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final response = await Supabase.instance.client
+            .from('profiles')
+            .select('user_role, position')
+            .eq('id', user!.id)
+            .single();
+        final userRole = response['user_role'] as String? ?? '';
+        final position = response['position'] as String? ?? '';
+        return userRole == 'admin' ||
+            position == 'President' ||
+            position == 'Secretary';
+      }
+      return false;
+    } catch (e) {
+      print('Error checking permissions: ${e}');
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,6 +90,29 @@ class Projects extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FutureBuilder<bool>(
+        future: _checkUserPermissions(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData && snapshot.data == true) {
+            return FloatingActionButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('New project action'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Icon(
+                Icons.add,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
     );
   }

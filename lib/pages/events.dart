@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:orsa_3/models/event_model.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
+import 'package:orsa_3/models/event_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 @NowaGenerated()
@@ -20,11 +20,7 @@ class _EventsState extends State<Events> {
 
   late Future<List<EventModel>> eventsFuture;
 
-  @override
-  void initState() {
-    super.initState();
-    eventsFuture = _fetchEvents();
-  }
+  bool canCreateContent = false;
 
   Future<List<EventModel>> _fetchEvents() async {
     final response = await Supabase.instance.client.from('events').select();
@@ -287,6 +283,101 @@ class _EventsState extends State<Events> {
     );
   }
 
+  String _getMonthName(int month) {
+    const months = const [
+      'JANUARY',
+      'FEBRUARY',
+      'MARCH',
+      'APRIL',
+      'MAY',
+      'JUNE',
+      'JULY',
+      'AUGUST',
+      'SEPTEMBER',
+      'OCTOBER',
+      'NOVEMBER',
+      'DECEMBER',
+    ];
+    return months[month - 1];
+  }
+
+  String _formatDateLabel(DateTime date) {
+    const months = const [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${date.day} ${months[date.month - 1]}';
+  }
+
+  String _formatEventDateTime(String dateTimeString) {
+    try {
+      final dateTime = DateTime.parse(dateTimeString).toLocal();
+      const months = const [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final formattedDate =
+          '${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}';
+      final formattedTime =
+          '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+      return '${formattedDate} at ${formattedTime}';
+    } catch (e) {
+      return dateTimeString;
+    }
+  }
+
+  Future<void> _checkUserPermissions() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final response = await Supabase.instance.client
+            .from('profiles')
+            .select('user_role, position')
+            .eq('id', user!.id)
+            .single();
+        final userRole = response['user_role'] as String? ?? '';
+        final position = response['position'] as String? ?? '';
+        if (mounted) {
+          setState(() {
+            canCreateContent =
+                userRole == 'admin' ||
+                position == 'President' ||
+                position == 'Secretary';
+          });
+        }
+      }
+    } catch (e) {
+      print('Error checking permissions: ${e}');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    eventsFuture = _fetchEvents();
+    _checkUserPermissions();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -473,70 +564,24 @@ class _EventsState extends State<Events> {
           },
         ),
       ),
+      floatingActionButton: canCreateContent
+          ? FloatingActionButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('New event action'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Icon(
+                Icons.add,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            )
+          : null,
     );
-  }
-
-  String _getMonthName(int month) {
-    const months = const [
-      'JANUARY',
-      'FEBRUARY',
-      'MARCH',
-      'APRIL',
-      'MAY',
-      'JUNE',
-      'JULY',
-      'AUGUST',
-      'SEPTEMBER',
-      'OCTOBER',
-      'NOVEMBER',
-      'DECEMBER',
-    ];
-    return months[month - 1];
-  }
-
-  String _formatDateLabel(DateTime date) {
-    const months = const [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${date.day} ${months[date.month - 1]}';
-  }
-
-  String _formatEventDateTime(String dateTimeString) {
-    try {
-      final dateTime = DateTime.parse(dateTimeString).toLocal();
-      const months = const [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      final formattedDate =
-          '${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}';
-      final formattedTime =
-          '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-      return '${formattedDate} at ${formattedTime}';
-    } catch (e) {
-      return dateTimeString;
-    }
   }
 }
 
