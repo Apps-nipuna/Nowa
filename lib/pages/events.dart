@@ -54,42 +54,6 @@ class _EventsState extends State<Events> {
     });
   }
 
-  String _getMonthName(int month) {
-    const months = const [
-      'JANUARY',
-      'FEBRUARY',
-      'MARCH',
-      'APRIL',
-      'MAY',
-      'JUNE',
-      'JULY',
-      'AUGUST',
-      'SEPTEMBER',
-      'OCTOBER',
-      'NOVEMBER',
-      'DECEMBER',
-    ];
-    return months[month - 1];
-  }
-
-  String _formatDateLabel(DateTime date) {
-    const months = const [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${date.day} ${months[date.month - 1]}';
-  }
-
   Widget _buildCalendarGrid(List<EventModel> events) {
     final firstDay = DateTime(_selectedDate.year, _selectedDate.month, 1);
     final lastDay = DateTime(_selectedDate.year, _selectedDate.month + 1, 0);
@@ -323,33 +287,6 @@ class _EventsState extends State<Events> {
     );
   }
 
-  String _formatEventDateTime(String dateTimeString) {
-    try {
-      final dateTime = DateTime.parse(dateTimeString).toLocal();
-      const months = const [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      final formattedDate =
-          '${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}';
-      final formattedTime =
-          '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-      return '${formattedDate} at ${formattedTime}';
-    } catch (e) {
-      return dateTimeString;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -537,6 +474,69 @@ class _EventsState extends State<Events> {
         ),
       ),
     );
+  }
+
+  String _getMonthName(int month) {
+    const months = const [
+      'JANUARY',
+      'FEBRUARY',
+      'MARCH',
+      'APRIL',
+      'MAY',
+      'JUNE',
+      'JULY',
+      'AUGUST',
+      'SEPTEMBER',
+      'OCTOBER',
+      'NOVEMBER',
+      'DECEMBER',
+    ];
+    return months[month - 1];
+  }
+
+  String _formatDateLabel(DateTime date) {
+    const months = const [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${date.day} ${months[date.month - 1]}';
+  }
+
+  String _formatEventDateTime(String dateTimeString) {
+    try {
+      final dateTime = DateTime.parse(dateTimeString).toLocal();
+      const months = const [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      final formattedDate =
+          '${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}';
+      final formattedTime =
+          '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+      return '${formattedDate} at ${formattedTime}';
+    } catch (e) {
+      return dateTimeString;
+    }
   }
 }
 

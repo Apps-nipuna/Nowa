@@ -83,34 +83,6 @@ class ProjectDetails extends StatelessWidget {
         .toList();
   }
 
-  Color getStatusColor(String status, ColorScheme colorScheme) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return colorScheme.primary;
-      case 'in_progress':
-      case 'in progress':
-        return const Color(0xffffa500);
-      case 'pending':
-        return colorScheme.outline;
-      default:
-        return colorScheme.outline;
-    }
-  }
-
-  String getStatusDisplay(String status) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return 'COMPLETED';
-      case 'in_progress':
-      case 'in progress':
-        return 'IN PROGRESS';
-      case 'pending':
-        return 'PENDING';
-      default:
-        return status.toUpperCase();
-    }
-  }
-
   Future<List<ProjectTask>> fetchProjectTasks() async {
     final response = await Supabase.instance.client
         .from('project_tasks')
@@ -693,5 +665,33 @@ class ProjectDetails extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color getStatusColor(String status, ColorScheme colorScheme) {
+    final lowerStatus = status.toLowerCase();
+    if (lowerStatus == 'completed') {
+      return colorScheme.primary;
+    }
+    if (lowerStatus == 'in_progress' || lowerStatus == 'in progress') {
+      return const Color(0xffffa500);
+    }
+    if (lowerStatus == 'pending') {
+      return colorScheme.outline;
+    }
+    return colorScheme.outline;
+  }
+
+  String getStatusDisplay(String status) {
+    final lowerStatus = status.toLowerCase();
+    if (lowerStatus == 'completed') {
+      return 'COMPLETED';
+    }
+    if (lowerStatus == 'in_progress' || lowerStatus == 'in progress') {
+      return 'IN PROGRESS';
+    }
+    if (lowerStatus == 'pending') {
+      return 'PENDING';
+    }
+    return status.toUpperCase();
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/pages/main_navigation_page.dart';
 
 @NowaGenerated()
 class CompleteProfile extends StatefulWidget {
@@ -49,50 +50,6 @@ class _CompleteProfileState extends State<CompleteProfile> {
     _phoneController.dispose();
     _troupNoController.dispose();
     super.dispose();
-  }
-
-  Future<void> _completeProfile() async {
-    if (_commonNameController.text.trim().isEmpty) {
-      setState(() {
-        _errorMessage = 'Common name is required';
-      });
-      return;
-    }
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
-      await Supabase.instance.client
-          .from('profiles')
-          .update({
-            'full_name': _fullNameController.text.trim(),
-            'common_name': _commonNameController.text.trim(),
-            'address': _addressController.text.trim(),
-            'phone': _phoneController.text.trim(),
-            'troup_no': _troupNoController.text.trim(),
-            'user_role': _selectedRole,
-            'position': _selectedPosition,
-          })
-          .eq('id', user!.id);
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, 'HomePage');
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
   }
 
   void _onRoleChanged(String? newRole) {
@@ -745,6 +702,52 @@ class _CompleteProfileState extends State<CompleteProfile> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error uploading image: ${e}')));
+      }
+    }
+  }
+
+  Future<void> _completeProfile() async {
+    if (_commonNameController.text.trim().isEmpty) {
+      setState(() {
+        _errorMessage = 'Common name is required';
+      });
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+      await Supabase.instance.client
+          .from('profiles')
+          .update({
+            'full_name': _fullNameController.text.trim(),
+            'common_name': _commonNameController.text.trim(),
+            'address': _addressController.text.trim(),
+            'phone': _phoneController.text.trim(),
+            'troup_no': _troupNoController.text.trim(),
+            'user_role': _selectedRole,
+            'position': _selectedPosition,
+          })
+          .eq('id', user!.id);
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainNavigationPage()),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

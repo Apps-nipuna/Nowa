@@ -20,22 +20,6 @@ class ProjectCard extends StatelessWidget {
     return description!;
   }
 
-  String formatWithSeparator(double? value) {
-    if (value == null) {
-      return '0';
-    }
-    final formatted = value!.toStringAsFixed(0);
-    final buffer = StringBuffer();
-    final chars = formatted.split('');
-    for (int i = 0; i < chars.length; i++) {
-      if (i > 0 && (chars.length - i) % 3 == 0) {
-        buffer.write(',');
-      }
-      buffer.write(chars[i]);
-    }
-    return buffer.toString();
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -275,5 +259,21 @@ class ProjectCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String formatWithSeparator(double? value) {
+    if (value == null) {
+      return '0';
+    }
+    final formatted = value!.toStringAsFixed(0);
+    final buffer = StringBuffer();
+    final chars = formatted.split('');
+    for (int i = 0; i < chars.length; i++) {
+      if (i > 0 && (chars.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(chars[i]);
+    }
+    return buffer.toString();
   }
 }

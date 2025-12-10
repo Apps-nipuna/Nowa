@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
-import 'package:orsa_3/pages/article_details.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/components/side_menu.dart';
+import 'package:orsa_3/pages/article_details.dart';
 
 @NowaGenerated()
 class HomePage extends StatefulWidget {
@@ -46,15 +47,124 @@ class _HomePageState extends State<HomePage> {
     _filterArticles();
   }
 
+  Widget _buildCategoryFilter(ColorScheme colorScheme, TextTheme textTheme) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: categories
+            .map(
+              (category) => Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedCategory = category;
+                      _filterArticles();
+                    });
+                  },
+                  child: Column(
+                    children: [
+                      Text(
+                        category,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: selectedCategory == category
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
+                          fontWeight: selectedCategory == category
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      if (selectedCategory == category)
+                        Container(
+                          height: 3,
+                          width: 30,
+                          margin: const EdgeInsets.only(top: 8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  Future<void> _fetchArticles() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('articles')
+          .select('*, likes(id), comments(id)')
+          .order('created_at', ascending: false);
+      if (mounted) {
+        setState(() {
+          allArticles = List<Map<String, dynamic>>.from(response).map((
+            article,
+          ) {
+            final likes = article['likes'] as List? ?? [];
+            final comments = article['comments'] as List? ?? [];
+            article['like_count'] = likes.length;
+            article['comment_count'] = comments.length;
+            article.remove('likes');
+            article.remove('comments');
+            return article;
+          }).toList();
+          _processArticles();
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching articles: ${e}');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load articles: ${e}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  void _filterArticles() {
+    if (selectedCategory == 'All') {
+      filteredArticles = (allArticles.cast<Map<String, dynamic>>())
+          .take(15)
+          .toList();
+    } else {
+      filteredArticles = allArticles
+          .where((article) => article['category'] == selectedCategory)
+          .toList()
+          .take(15)
+          .toList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
+      drawer: const SideMenu(),
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: colorScheme.primary,
         elevation: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu, color: colorScheme.onPrimary),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Text(
           'ORSA',
           style: textTheme.headlineSmall?.copyWith(
@@ -111,53 +221,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCategoryFilter(ColorScheme colorScheme, TextTheme textTheme) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: categories
-            .map(
-              (category) => Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedCategory = category;
-                      _filterArticles();
-                    });
-                  },
-                  child: Column(
-                    children: [
-                      Text(
-                        category,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: selectedCategory == category
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
-                          fontWeight: selectedCategory == category
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                      if (selectedCategory == category)
-                        Container(
-                          height: 3,
-                          width: 30,
-                          margin: const EdgeInsets.only(top: 8),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    print('HomePage initState called');
+    _fetchArticles();
   }
 
   Widget _buildLatestArticleCover(
@@ -175,11 +243,11 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: () {
         if (articleId != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ArticleDetails(articleId: articleId!),
-            ),
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            isDismissible: true,
+            builder: (context) => ArticleDetails(articleId: articleId!),
           );
         }
       },
@@ -276,11 +344,11 @@ class _HomePageState extends State<HomePage> {
           return GestureDetector(
             onTap: () {
               if (articleId != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ArticleDetails(articleId: articleId!),
-                  ),
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  isDismissible: true,
+                  builder: (context) => ArticleDetails(articleId: articleId!),
                 );
               }
             },
@@ -394,11 +462,11 @@ class _HomePageState extends State<HomePage> {
         return GestureDetector(
           onTap: () {
             if (articleId != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ArticleDetails(articleId: articleId!),
-                ),
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                isDismissible: true,
+                builder: (context) => ArticleDetails(articleId: articleId!),
               );
             }
           },
@@ -498,64 +566,5 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchArticles();
-  }
-
-  Future<void> _fetchArticles() async {
-    try {
-      final response = await Supabase.instance.client
-          .from('articles')
-          .select('*, likes(id), comments(id)')
-          .order('created_at', ascending: false);
-      if (mounted) {
-        setState(() {
-          allArticles = List<Map<String, dynamic>>.from(response).map((
-            article,
-          ) {
-            final likes = article['likes'] as List? ?? [];
-            final comments = article['comments'] as List? ?? [];
-            article['like_count'] = likes.length;
-            article['comment_count'] = comments.length;
-            article.remove('likes');
-            article.remove('comments');
-            return article;
-          }).toList();
-          _processArticles();
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error fetching articles: ${e}');
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load articles: ${e}'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  void _filterArticles() {
-    if (selectedCategory == 'All') {
-      filteredArticles = (allArticles.cast<Map<String, dynamic>>())
-          .take(15)
-          .toList();
-    } else {
-      filteredArticles = allArticles
-          .where((article) => article['category'] == selectedCategory)
-          .toList()
-          .take(15)
-          .toList();
-    }
   }
 }

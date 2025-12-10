@@ -34,7 +34,10 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const SideMenu(),
-      body: _pages[_currentIndex],
+      body: Navigator(
+        onGenerateRoute: (settings) =>
+            MaterialPageRoute(builder: (context) => _pages[_currentIndex]),
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,

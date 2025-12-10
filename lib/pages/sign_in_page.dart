@@ -4,6 +4,7 @@ import 'package:orsa_3/pages/forgot_password_page.dart';
 import 'package:orsa_3/pages/create_account_page.dart';
 import 'package:orsa_3/integrations/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/pages/complete_profile.dart';
 import 'package:orsa_3/pages/main_navigation_page.dart';
 
 @NowaGenerated()
@@ -317,7 +318,11 @@ class _SignInPageState extends State<SignInPage> {
             final commonName = response['common_name'];
             if (commonName == null || commonName.toString().isEmpty) {
               if (mounted) {
-                Navigator.of(context).pushReplacementNamed('CompleteProfile');
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const CompleteProfile(),
+                  ),
+                );
               }
             } else {
               if (mounted) {
@@ -330,14 +335,14 @@ class _SignInPageState extends State<SignInPage> {
             }
           } catch (profileError) {
             setState(() {
-              _errorMessage = 'Error loading profile: ${profileError}';
+              _errorMessage = 'Unable to load profile. Please try again.';
             });
           }
         }
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = 'Invalid email or password';
       });
     } finally {
       if (mounted) {
