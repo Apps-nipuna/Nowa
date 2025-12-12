@@ -5,7 +5,6 @@ import 'package:orsa_3/pages/events.dart';
 import 'package:orsa_3/pages/members.dart';
 import 'package:orsa_3/pages/memories_home.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
-import 'package:orsa_3/components/side_menu.dart';
 
 @NowaGenerated()
 class MainNavigationPage extends StatefulWidget {
@@ -33,7 +32,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const SideMenu(),
       body: Navigator(
         onGenerateRoute: (settings) =>
             MaterialPageRoute(builder: (context) => _pages[_currentIndex]),

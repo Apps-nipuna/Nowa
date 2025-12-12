@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:orsa_3/pages/article_details.dart';
-import 'package:orsa_3/components/side_menu.dart';
 
 @NowaGenerated()
 class HomePage extends StatefulWidget {
@@ -473,22 +472,66 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _checkUserPermissions() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final response = await Supabase.instance.client
+            .from('profiles')
+            .select('user_role, position')
+            .eq('id', user!.id)
+            .single();
+        final userRole = response['user_role'] as String? ?? '';
+        final position = response['position'] as String? ?? '';
+        if (mounted) {
+          setState(() {
+            canCreateContent =
+                userRole == 'admin' ||
+                position == 'President' ||
+                position == 'Secretary';
+          });
+        }
+      }
+    } catch (e) {
+      print('Error checking permissions: ${e}');
+    }
+  }
+
+  void _processArticles() {
+    Set<String> uniqueCategories = {'All'};
+    for (var article in allArticles) {
+      if (article['category'] != null) {
+        uniqueCategories.add(article['category']);
+      }
+    }
+    categories = uniqueCategories.toList();
+    topArticles = List.from(allArticles)
+      ..sort((a, b) {
+        int aScore = (a['like_count'] ?? 0) + (a['comment_count'] ?? 0);
+        int bScore = (b['like_count'] ?? 0) + (b['comment_count'] ?? 0);
+        return bScore.compareTo(aScore);
+      });
+    topArticles = topArticles.take(7).toList();
+    _filterArticles();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    print('HomePage initState called');
+    _fetchArticles();
+    _checkUserPermissions();
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      drawer: const SideMenu(),
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: colorScheme.primary,
         elevation: 0,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: Icon(Icons.menu, color: colorScheme.onPrimary),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
         title: Text(
           'ORSA',
           style: textTheme.headlineSmall?.copyWith(
@@ -555,56 +598,5 @@ class _HomePageState extends State<HomePage> {
         child: Icon(Icons.add, color: colorScheme.onPrimary),
       ),
     );
-  }
-
-  Future<void> _checkUserPermissions() async {
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        final response = await Supabase.instance.client
-            .from('profiles')
-            .select('user_role, position')
-            .eq('id', user!.id)
-            .single();
-        final userRole = response['user_role'] as String? ?? '';
-        final position = response['position'] as String? ?? '';
-        if (mounted) {
-          setState(() {
-            canCreateContent =
-                userRole == 'admin' ||
-                position == 'President' ||
-                position == 'Secretary';
-          });
-        }
-      }
-    } catch (e) {
-      print('Error checking permissions: ${e}');
-    }
-  }
-
-  void _processArticles() {
-    Set<String> uniqueCategories = {'All'};
-    for (var article in allArticles) {
-      if (article['category'] != null) {
-        uniqueCategories.add(article['category']);
-      }
-    }
-    categories = uniqueCategories.toList();
-    topArticles = List.from(allArticles)
-      ..sort((a, b) {
-        int aScore = (a['like_count'] ?? 0) + (a['comment_count'] ?? 0);
-        int bScore = (b['like_count'] ?? 0) + (b['comment_count'] ?? 0);
-        return bScore.compareTo(aScore);
-      });
-    topArticles = topArticles.take(7).toList();
-    _filterArticles();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    print('HomePage initState called');
-    _fetchArticles();
-    _checkUserPermissions();
   }
 }
