@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/functions/sanitize_image_url.dart';
 
 @NowaGenerated()
 class ArticleDetails extends StatefulWidget {
@@ -258,6 +259,7 @@ class _ArticleDetailsState extends State<ArticleDetails> {
       if (article == null) {
         bodyContent = const Center(child: Text('Not found'));
       } else {
+        final imageUrl = sanitizeImageUrl(article?['image_url'] as String?);
         bodyContent = SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,8 +268,8 @@ class _ArticleDetailsState extends State<ArticleDetails> {
                 height: 280,
                 width: double.infinity,
                 color: colorScheme.primaryContainer,
-                child: article?['image_url'] != null
-                    ? Image.network(article!['image_url'], fit: BoxFit.cover)
+                child: imageUrl.isNotEmpty
+                    ? Image.network(imageUrl, fit: BoxFit.cover)
                     : null,
               ),
               Padding(
@@ -520,5 +522,8 @@ class _ArticleDetailsState extends State<ArticleDetails> {
         ],
       ),
     );
+    ;
+    ;
+    ;
   }
 }

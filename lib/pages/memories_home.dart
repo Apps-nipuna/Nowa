@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:orsa_3/models/gallery.dart';
+import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/functions/sanitize_image_url.dart';
 
 @NowaGenerated()
 class MemoriesHome extends StatefulWidget {
@@ -332,6 +333,7 @@ class _GalleryCardState extends State<_GalleryCard> {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = sanitizeImageUrl(widget.gallery.coverImageUrl);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
@@ -359,7 +361,7 @@ class _GalleryCardState extends State<_GalleryCard> {
             children: [
               Stack(
                 children: [
-                  if (widget.gallery.coverImageUrl != null)
+                  if (imageUrl.isNotEmpty)
                     Container(
                       width: double.infinity,
                       height: 200,
@@ -367,7 +369,7 @@ class _GalleryCardState extends State<_GalleryCard> {
                         context,
                       ).colorScheme.surfaceContainerHighest,
                       child: Image.network(
-                        widget.gallery.coverImageUrl!,
+                        imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
                           color: Theme.of(context).colorScheme.primaryContainer,

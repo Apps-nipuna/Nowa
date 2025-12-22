@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/pages/create_article.dart';
+import 'package:orsa_3/functions/sanitize_image_url.dart';
 import 'package:orsa_3/pages/article_details.dart';
 
 @NowaGenerated()
@@ -29,6 +31,183 @@ class _HomePageState extends State<HomePage> {
   List<String> categories = ['All'];
 
   bool canCreateContent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchArticles();
+    _checkUserPermissions();
+  }
+
+  Future<void> _fetchArticles() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('articles')
+          .select('*, likes(id), comments(id)')
+          .order('created_at', ascending: false);
+      if (mounted) {
+        setState(() {
+          allArticles = List<Map<String, dynamic>>.from(response).map((
+            article,
+          ) {
+            final likes = article['likes'] as List? ?? [];
+            final comments = article['comments'] as List? ?? [];
+            article['like_count'] = likes.length;
+            article['comment_count'] = comments.length;
+            article.remove('likes');
+            article.remove('comments');
+            return article;
+          }).toList();
+          _processArticles();
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load articles: ${e}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _checkUserPermissions() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final response = await Supabase.instance.client
+            .from('profiles')
+            .select('user_role, position')
+            .eq('id', user!.id)
+            .single();
+        final userRole = response['user_role'] as String? ?? '';
+        final position = response['position'] as String? ?? '';
+        if (mounted) {
+          setState(() {
+            canCreateContent =
+                userRole == 'admin' ||
+                position == 'President' ||
+                position == 'Secretary';
+          });
+        }
+      }
+    } catch (e) {
+      print('Error checking permissions: ${e}');
+    }
+  }
+
+  void _processArticles() {
+    Set<String> uniqueCategories = {'All'};
+    for (var article in allArticles) {
+      if (article['category'] != null) {
+        uniqueCategories.add(article['category']);
+      }
+    }
+    categories = uniqueCategories.toList();
+    topArticles = List.from(allArticles)
+      ..sort((a, b) {
+        int aScore = (a['like_count'] ?? 0) + (a['comment_count'] ?? 0);
+        int bScore = (b['like_count'] ?? 0) + (b['comment_count'] ?? 0);
+        return bScore.compareTo(aScore);
+      });
+    topArticles = topArticles.take(7).toList();
+    _filterArticles();
+  }
+
+  void _filterArticles() {
+    if (selectedCategory == 'All') {
+      filteredArticles = (allArticles.cast<Map<String, dynamic>>())
+          .take(15)
+          .toList();
+    } else {
+      filteredArticles = allArticles
+          .where((article) => article['category'] == selectedCategory)
+          .toList()
+          .take(15)
+          .toList();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: colorScheme.primary,
+        elevation: 0,
+        title: Text(
+          'ORSA',
+          style: textTheme.headlineSmall?.copyWith(
+            color: colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.notifications_outlined,
+              color: colorScheme.onPrimary,
+            ),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: Icon(Icons.help_outline, color: colorScheme.onPrimary),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+              ),
+            )
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (allArticles.isNotEmpty)
+                    _buildLatestArticleCover(colorScheme, textTheme),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'Top News',
+                      style: textTheme.titleLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (topArticles.isNotEmpty)
+                    _buildTopArticlesHorizontal(colorScheme, textTheme),
+                  const SizedBox(height: 24),
+                  _buildCategoryFilter(colorScheme, textTheme),
+                  const SizedBox(height: 16),
+                  _buildArticlesList(colorScheme, textTheme),
+                ],
+              ),
+            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreateArticle()),
+          );
+        },
+        backgroundColor: colorScheme.primary,
+        child: Icon(Icons.add, color: colorScheme.onPrimary),
+      ),
+    );
+  }
 
   Widget _buildCategoryFilter(ColorScheme colorScheme, TextTheme textTheme) {
     return SingleChildScrollView(
@@ -79,59 +258,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _fetchArticles() async {
-    try {
-      final response = await Supabase.instance.client
-          .from('articles')
-          .select('*, likes(id), comments(id)')
-          .order('created_at', ascending: false);
-      if (mounted) {
-        setState(() {
-          allArticles = List<Map<String, dynamic>>.from(response).map((
-            article,
-          ) {
-            final likes = article['likes'] as List? ?? [];
-            final comments = article['comments'] as List? ?? [];
-            article['like_count'] = likes.length;
-            article['comment_count'] = comments.length;
-            article.remove('likes');
-            article.remove('comments');
-            return article;
-          }).toList();
-          _processArticles();
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error fetching articles: ${e}');
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load articles: ${e}'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  void _filterArticles() {
-    if (selectedCategory == 'All') {
-      filteredArticles = (allArticles.cast<Map<String, dynamic>>())
-          .take(15)
-          .toList();
-    } else {
-      filteredArticles = allArticles
-          .where((article) => article['category'] == selectedCategory)
-          .toList()
-          .take(15)
-          .toList();
-    }
-  }
-
   Widget _buildLatestArticleCover(
     ColorScheme colorScheme,
     TextTheme textTheme,
@@ -140,7 +266,7 @@ class _HomePageState extends State<HomePage> {
       return const SizedBox.shrink();
     }
     final article = allArticles.first;
-    final imageUrl = article['image_url'] as String?;
+    final imageUrl = sanitizeImageUrl(article['image_url'] as String?);
     final title = article['title'] as String?;
     final category = article['category'] as String?;
     final articleId = article['id'] as int?;
@@ -161,9 +287,9 @@ class _HomePageState extends State<HomePage> {
             height: 280,
             width: double.infinity,
             decoration: BoxDecoration(
-              image: imageUrl != null && imageUrl!.isNotEmpty
+              image: imageUrl.isNotEmpty
                   ? DecorationImage(
-                      image: NetworkImage(imageUrl!),
+                      image: NetworkImage(imageUrl),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -239,7 +365,7 @@ class _HomePageState extends State<HomePage> {
         itemCount: topArticles.length,
         itemBuilder: (context, index) {
           final article = topArticles[index];
-          final imageUrl = article['image_url'] as String?;
+          final imageUrl = sanitizeImageUrl(article['image_url'] as String?);
           final title = article['title'] as String?;
           final articleId = article['id'] as int?;
           int engagement =
@@ -266,9 +392,9 @@ class _HomePageState extends State<HomePage> {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        image: imageUrl != null && imageUrl!.isNotEmpty
+                        image: imageUrl.isNotEmpty
                             ? DecorationImage(
-                                image: NetworkImage(imageUrl!),
+                                image: NetworkImage(imageUrl),
                                 fit: BoxFit.cover,
                               )
                             : null,
@@ -340,7 +466,7 @@ class _HomePageState extends State<HomePage> {
         final article = filteredArticles[index];
         final likeCount = article['like_count'] as int? ?? 0;
         final commentCount = article['comment_count'] as int? ?? 0;
-        final imageUrl = article['image_url'] as String?;
+        final imageUrl = sanitizeImageUrl(article['image_url'] as String?);
         final title = article['title'] as String?;
         final createdAtStr = article['created_at'] as String?;
         final articleId = article['id'] as int?;
@@ -392,9 +518,9 @@ class _HomePageState extends State<HomePage> {
                     height: 140,
                     decoration: BoxDecoration(
                       color: colorScheme.primaryContainer,
-                      image: imageUrl != null && imageUrl!.isNotEmpty
+                      image: imageUrl.isNotEmpty
                           ? DecorationImage(
-                              image: NetworkImage(imageUrl!),
+                              image: NetworkImage(imageUrl),
                               fit: BoxFit.cover,
                             )
                           : null,
@@ -469,134 +595,6 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
-    );
-  }
-
-  Future<void> _checkUserPermissions() async {
-    try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        final response = await Supabase.instance.client
-            .from('profiles')
-            .select('user_role, position')
-            .eq('id', user!.id)
-            .single();
-        final userRole = response['user_role'] as String? ?? '';
-        final position = response['position'] as String? ?? '';
-        if (mounted) {
-          setState(() {
-            canCreateContent =
-                userRole == 'admin' ||
-                position == 'President' ||
-                position == 'Secretary';
-          });
-        }
-      }
-    } catch (e) {
-      print('Error checking permissions: ${e}');
-    }
-  }
-
-  void _processArticles() {
-    Set<String> uniqueCategories = {'All'};
-    for (var article in allArticles) {
-      if (article['category'] != null) {
-        uniqueCategories.add(article['category']);
-      }
-    }
-    categories = uniqueCategories.toList();
-    topArticles = List.from(allArticles)
-      ..sort((a, b) {
-        int aScore = (a['like_count'] ?? 0) + (a['comment_count'] ?? 0);
-        int bScore = (b['like_count'] ?? 0) + (b['comment_count'] ?? 0);
-        return bScore.compareTo(aScore);
-      });
-    topArticles = topArticles.take(7).toList();
-    _filterArticles();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    print('HomePage initState called');
-    _fetchArticles();
-    _checkUserPermissions();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.primary,
-        elevation: 0,
-        title: Text(
-          'ORSA',
-          style: textTheme.headlineSmall?.copyWith(
-            color: colorScheme.onPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: colorScheme.onPrimary,
-            ),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.help_outline, color: colorScheme.onPrimary),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
-              ),
-            )
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (allArticles.isNotEmpty)
-                    _buildLatestArticleCover(colorScheme, textTheme),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Top News',
-                      style: textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (topArticles.isNotEmpty)
-                    _buildTopArticlesHorizontal(colorScheme, textTheme),
-                  const SizedBox(height: 24),
-                  _buildCategoryFilter(colorScheme, textTheme),
-                  const SizedBox(height: 16),
-                  _buildArticlesList(colorScheme, textTheme),
-                ],
-              ),
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('New article action'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
-        backgroundColor: colorScheme.primary,
-        child: Icon(Icons.add, color: colorScheme.onPrimary),
-      ),
     );
   }
 }
