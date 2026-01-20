@@ -1,4 +1,4 @@
-package com.example.orsa_3
+package com.seroniya.apps.orsa3
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -89,6 +89,36 @@
             "deps": [
                 "lib/pages/create_article.dart"
             ]
+        },
+        {
+            "x": 1383,
+            "y": 1085,
+            "w": 393,
+            "h": 808,
+            "widget": "const SignInPage()",
+            "deps": [
+                "lib/pages/sign_in_page.dart"
+            ]
+        },
+        {
+            "x": 1831,
+            "y": 1085,
+            "w": 393,
+            "h": 808,
+            "widget": "const CreateAccountPage()",
+            "deps": [
+                "lib/pages/create_account_page.dart"
+            ]
+        },
+        {
+            "x": 2286,
+            "y": 1085,
+            "w": 393,
+            "h": 808,
+            "widget": "const ForgotPasswordPage()",
+            "deps": [
+                "lib/pages/forgot_password_page.dart"
+            ]
         }
     ]
 }

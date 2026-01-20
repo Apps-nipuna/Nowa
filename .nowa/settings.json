@@ -1,8 +1,8 @@
 {
-    "version": "3.3.4",
+    "version": "3.4.0",
     "app": {
         "name": "ORSA",
-        "bundleId": "com.example.orsa3"
+        "bundleId": "com.seroniya.apps.orsa3"
     },
     "main": [
         {
