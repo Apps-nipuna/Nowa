@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:orsa_3/integrations/supabase_service.dart';
+import 'package:orsa_3/pages/complete_profile.dart';
 
 @NowaGenerated()
 class CreateAccountPage extends StatefulWidget {
@@ -326,7 +327,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         _passwordController.text,
       );
       if (mounted) {
-        Navigator.pushReplacementNamed(context, 'CompleteProfile');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const CompleteProfile()),
+        );
       }
     } catch (e) {
       setState(() {

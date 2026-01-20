@@ -149,36 +149,6 @@ class _CreateArticleState extends State<CreateArticle> {
     }
   }
 
-  Future<void> _uploadImage() async {
-    if (_selectedImage == null) {
-      return;
-    }
-    try {
-      final fileName = 'article_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final path = 'main_images/${fileName}';
-      final bytes = await _selectedImage?.readAsBytes();
-      await Supabase.instance.client.storage
-          .from('MainImages')
-          .uploadBinary(
-            path,
-            bytes,
-            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
-          );
-      final url = Supabase.instance.client.storage
-          .from('MainImages')
-          .getPublicUrl(path);
-      setState(() {
-        _uploadedImageUrl = url;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error uploading image: ${e}')));
-      }
-    }
-  }
-
   Future<void> _submitArticle() async {
     if (_titleController.text.isEmpty ||
         _contentController.text.isEmpty ||
@@ -669,5 +639,35 @@ class _CreateArticleState extends State<CreateArticle> {
         ),
       ),
     );
+  }
+
+  Future<void> _uploadImage() async {
+    if (_selectedImage == null) {
+      return;
+    }
+    try {
+      final fileName = 'article_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final path = 'main_images/${fileName}';
+      final bytes = await _selectedImage?.readAsBytes();
+      await Supabase.instance.client.storage
+          .from('MainImages')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+          );
+      final url = Supabase.instance.client.storage
+          .from('MainImages')
+          .getPublicUrl(path);
+      setState(() {
+        _uploadedImageUrl = url;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error uploading image: ${e}')));
+      }
+    }
   }
 }
