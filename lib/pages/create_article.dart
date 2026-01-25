@@ -43,6 +43,43 @@ class _CreateArticleState extends State<CreateArticle> {
     _fetchCategories();
   }
 
+  Future<void> _fetchCategories() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('articles')
+          .select('category');
+      if (mounted) {
+        final Set<String> categoriesSet = {};
+        for (var article in response) {
+          final category = article['category'] as String?;
+          if (category != null && category!.isNotEmpty) {
+            categoriesSet.add(category);
+          }
+        }
+        final List<String> categoriesList = categoriesSet.toList();
+        categoriesList.sort();
+        setState(() {
+          _availableCategories = categoriesList;
+          if (_availableCategories.isNotEmpty) {
+            _selectedCategory = _availableCategories.first;
+          }
+          _isLoadingCategories = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching categories: ${e}');
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+          _availableCategories = [];
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading categories: ${e}')),
+        );
+      }
+    }
+  }
+
   Future<void> _showAddCategoryDialog() async {
     _newCategoryController.clear();
     return showDialog(
@@ -149,6 +186,36 @@ class _CreateArticleState extends State<CreateArticle> {
     }
   }
 
+  Future<void> _uploadImage() async {
+    if (_selectedImage == null) {
+      return;
+    }
+    try {
+      final fileName = 'article_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final path = 'main_images/${fileName}';
+      final bytes = await _selectedImage?.readAsBytes();
+      await Supabase.instance.client.storage
+          .from('MainImages')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+          );
+      final url = Supabase.instance.client.storage
+          .from('MainImages')
+          .getPublicUrl(path);
+      setState(() {
+        _uploadedImageUrl = url;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error uploading image: ${e}')));
+      }
+    }
+  }
+
   Future<void> _submitArticle() async {
     if (_titleController.text.isEmpty ||
         _contentController.text.isEmpty ||
@@ -206,63 +273,10 @@ class _CreateArticleState extends State<CreateArticle> {
     super.dispose();
   }
 
-  Future<void> _fetchCategories() async {
-    try {
-      setState(() {
-        _isLoadingCategories = true;
-      });
-      final response = await Supabase.instance.client
-          .from('articles')
-          .select('category');
-      final Set<String> categoriesSet = {};
-      for (var article in response) {
-        final category = article['category'];
-        if (category is String && category.isNotEmpty) {
-          categoriesSet.add(category);
-        }
-      }
-      final List<String> categoriesList = categoriesSet.toList();
-      categoriesList.sort();
-      if (mounted) {
-        setState(() {
-          _availableCategories = categoriesList;
-          if (_availableCategories.isNotEmpty) {
-            _selectedCategory = _availableCategories.first;
-          }
-          _isLoadingCategories = false;
-        });
-      }
-    } catch (e) {
-      print('Error fetching categories: ${e}');
-      if (mounted) {
-        setState(() {
-          _isLoadingCategories = false;
-          _availableCategories = [];
-          _selectedCategory = '';
-        });
-      }
-    }
-  }
-
-  Future<void>? _handlePublishButtonPressed() async {
-    if (_selectedImage != null && _uploadedImageUrl == null) {
-      await _uploadImage();
-    }
-    if (_uploadedImageUrl != null) {
-      await _submitArticle();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final isButtonDisabled =
-        _isSubmitting ||
-        _titleController.text.isEmpty ||
-        _contentController.text.isEmpty ||
-        _selectedImage == null ||
-        _selectedCategory.isEmpty;
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
@@ -439,9 +453,6 @@ class _CreateArticleState extends State<CreateArticle> {
                   color: colorScheme.onSurface,
                 ),
                 maxLines: 1,
-                onChanged: (_) {
-                  setState(() {});
-                },
               ),
               const SizedBox(height: 20),
               Text(
@@ -494,15 +505,9 @@ class _CreateArticleState extends State<CreateArticle> {
                                   horizontal: 16,
                                   vertical: 4,
                                 ),
-                                hint: Text(
-                                  'Select a category',
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
                                 items: _availableCategories
                                     .map(
-                                      (category) => DropdownMenuItem<String>(
+                                      (category) => DropdownMenuItem(
                                         value: category,
                                         child: Text(
                                           category,
@@ -590,18 +595,23 @@ class _CreateArticleState extends State<CreateArticle> {
                   color: colorScheme.onSurface,
                 ),
                 maxLines: 8,
-                onChanged: (_) {
-                  setState(() {});
-                },
               ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed: isButtonDisabled
+                  onPressed: _isSubmitting || _availableCategories.isEmpty
                       ? null
-                      : _handlePublishButtonPressed,
+                      : () async {
+                          if (_selectedImage != null &&
+                              _uploadedImageUrl == null) {
+                            await _uploadImage();
+                          }
+                          if (_uploadedImageUrl != null) {
+                            await _submitArticle();
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
@@ -639,35 +649,5 @@ class _CreateArticleState extends State<CreateArticle> {
         ),
       ),
     );
-  }
-
-  Future<void> _uploadImage() async {
-    if (_selectedImage == null) {
-      return;
-    }
-    try {
-      final fileName = 'article_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final path = 'main_images/${fileName}';
-      final bytes = await _selectedImage?.readAsBytes();
-      await Supabase.instance.client.storage
-          .from('MainImages')
-          .uploadBinary(
-            path,
-            bytes,
-            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
-          );
-      final url = Supabase.instance.client.storage
-          .from('MainImages')
-          .getPublicUrl(path);
-      setState(() {
-        _uploadedImageUrl = url;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error uploading image: ${e}')));
-      }
-    }
   }
 }
