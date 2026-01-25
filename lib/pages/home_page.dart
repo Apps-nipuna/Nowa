@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:orsa_3/pages/create_article.dart';
 import 'package:orsa_3/functions/sanitize_image_url.dart';
 import 'package:orsa_3/pages/article_details.dart';
+import 'package:orsa_3/pages/create_article.dart';
 
 @NowaGenerated()
 class HomePage extends StatefulWidget {
@@ -84,7 +84,7 @@ class _HomePageState extends State<HomePage> {
         final response = await Supabase.instance.client
             .from('profiles')
             .select('user_role, position')
-            .eq('id', user!.id)
+            .eq('id', user.id)
             .single();
         final userRole = response['user_role'] as String? ?? '';
         final position = response['position'] as String? ?? '';
@@ -132,81 +132,6 @@ class _HomePageState extends State<HomePage> {
           .take(15)
           .toList();
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.primary,
-        elevation: 0,
-        title: Text(
-          'ORSA',
-          style: textTheme.headlineSmall?.copyWith(
-            color: colorScheme.onPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: colorScheme.onPrimary,
-            ),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.help_outline, color: colorScheme.onPrimary),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
-              ),
-            )
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (allArticles.isNotEmpty)
-                    _buildLatestArticleCover(colorScheme, textTheme),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Top News',
-                      style: textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (topArticles.isNotEmpty)
-                    _buildTopArticlesHorizontal(colorScheme, textTheme),
-                  const SizedBox(height: 24),
-                  _buildCategoryFilter(colorScheme, textTheme),
-                  const SizedBox(height: 16),
-                  _buildArticlesList(colorScheme, textTheme),
-                ],
-              ),
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreateArticle()),
-          );
-        },
-        backgroundColor: colorScheme.primary,
-        child: Icon(Icons.add, color: colorScheme.onPrimary),
-      ),
-    );
   }
 
   Widget _buildCategoryFilter(ColorScheme colorScheme, TextTheme textTheme) {
@@ -277,7 +202,7 @@ class _HomePageState extends State<HomePage> {
             context: context,
             isScrollControlled: true,
             isDismissible: true,
-            builder: (context) => ArticleDetails(articleId: articleId!),
+            builder: (context) => ArticleDetails(articleId: articleId),
           );
         }
       },
@@ -317,7 +242,7 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (category != null && category!.isNotEmpty)
+                if (category != null && category.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -328,7 +253,7 @@ class _HomePageState extends State<HomePage> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      category!,
+                      category,
                       style: textTheme.labelSmall?.copyWith(
                         color: colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
@@ -378,7 +303,7 @@ class _HomePageState extends State<HomePage> {
                   context: context,
                   isScrollControlled: true,
                   isDismissible: true,
-                  builder: (context) => ArticleDetails(articleId: articleId!),
+                  builder: (context) => ArticleDetails(articleId: articleId),
                 );
               }
             },
@@ -473,7 +398,7 @@ class _HomePageState extends State<HomePage> {
         String timeAgo = 'just now';
         if (createdAtStr != null && createdAtStr!.isNotEmpty) {
           try {
-            final createdAt = DateTime.parse(createdAtStr!);
+            final createdAt = DateTime.parse(createdAtStr);
             final now = DateTime.now();
             final difference = now.difference(createdAt);
             if (difference.inMinutes < 60) {
@@ -496,7 +421,7 @@ class _HomePageState extends State<HomePage> {
                 context: context,
                 isScrollControlled: true,
                 isDismissible: true,
-                builder: (context) => ArticleDetails(articleId: articleId!),
+                builder: (context) => ArticleDetails(articleId: articleId),
               );
             }
           },
@@ -595,6 +520,84 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
+    );
+  }
+
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: colorScheme.primary,
+        elevation: 0,
+        title: Text(
+          'ORSA',
+          style: textTheme.headlineSmall?.copyWith(
+            color: colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.notifications_outlined,
+              color: colorScheme.onPrimary,
+            ),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: Icon(Icons.help_outline, color: colorScheme.onPrimary),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+              ),
+            )
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (allArticles.isNotEmpty)
+                    _buildLatestArticleCover(colorScheme, textTheme),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'Top News',
+                      style: textTheme.titleLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (topArticles.isNotEmpty)
+                    _buildTopArticlesHorizontal(colorScheme, textTheme),
+                  const SizedBox(height: 24),
+                  _buildCategoryFilter(colorScheme, textTheme),
+                  const SizedBox(height: 16),
+                  _buildArticlesList(colorScheme, textTheme),
+                ],
+              ),
+            ),
+      floatingActionButton: canCreateContent
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateArticle(),
+                  ),
+                );
+              },
+              backgroundColor: colorScheme.primary,
+              child: Icon(Icons.add, color: colorScheme.onPrimary),
+            )
+          : null,
     );
   }
 }

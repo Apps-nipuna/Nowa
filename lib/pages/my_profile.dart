@@ -23,24 +23,41 @@ class _MyProfileState extends State<MyProfile> {
     profileFuture = _fetchCurrentUserProfile();
   }
 
-  Future<Map<String, dynamic>?> _fetchCurrentUserProfile() async {
-    try {
-      final userId = Supabase.instance.client.auth.currentUser!.id;
-      if (userId == null) {
-        return null;
-      }
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select()
-          .eq('id', userId)
-          .single();
-      return response as Map<String, dynamic>;
-    } catch (e) {
-      return null;
-    }
+  Widget _buildInfoRow(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -68,7 +85,8 @@ class _MyProfileState extends State<MyProfile> {
             final fullName = profile?['full_name'] as String?;
             final position = profile?['position'] as String? ?? '';
             final userRole = profile?['user_role'] as String? ?? '';
-            final emailAddress = profile?['email_address'] as String?;
+            final emailAddress =
+                Supabase.instance.client.auth.currentUser?.email;
             final phone = profile?['phone'] as String?;
             final address = profile?['address'] as String?;
             final troupNo = profile?['troup_no'] as String?;
@@ -143,10 +161,10 @@ class _MyProfileState extends State<MyProfile> {
                               ?.copyWith(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
-                        if (fullName != null && fullName!.isNotEmpty) ...[
+                        if (fullName != null && fullName.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
-                            fullName!,
+                            fullName,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: Theme.of(
@@ -194,31 +212,31 @@ class _MyProfileState extends State<MyProfile> {
                             child: Column(
                               children: [
                                 if (emailAddress != null &&
-                                    emailAddress!.isNotEmpty)
+                                    emailAddress.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 12),
                                     child: _buildInfoRow(
                                       context,
                                       'Email',
-                                      emailAddress!,
+                                      emailAddress,
                                       Icons.email_outlined,
                                     ),
                                   ),
-                                if (phone != null && phone!.isNotEmpty)
+                                if (phone != null && phone.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 12),
                                     child: _buildInfoRow(
                                       context,
                                       'Phone',
-                                      phone!,
+                                      phone,
                                       Icons.phone_outlined,
                                     ),
                                   ),
-                                if (address != null && address!.isNotEmpty)
+                                if (address != null && address.isNotEmpty)
                                   _buildInfoRow(
                                     context,
                                     'Address',
-                                    address!,
+                                    address,
                                     Icons.location_on_outlined,
                                   ),
                               ],
@@ -226,7 +244,7 @@ class _MyProfileState extends State<MyProfile> {
                           ),
                           const SizedBox(height: 24),
                         ],
-                        if (troupNo != null && troupNo!.isNotEmpty)
+                        if (troupNo != null && troupNo.isNotEmpty)
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(16),
@@ -250,7 +268,7 @@ class _MyProfileState extends State<MyProfile> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  troupNo!,
+                                  troupNo,
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         color: Theme.of(
@@ -275,38 +293,21 @@ class _MyProfileState extends State<MyProfile> {
     );
   }
 
-  Widget _buildInfoRow(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+  Future<Map<String, dynamic>?> _fetchCurrentUserProfile() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      final userId = user!.id;
+      if (userId == null) {
+        return null;
+      }
+      final response = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .single();
+      return response as Map<String, dynamic>;
+    } catch (e) {
+      return null;
+    }
   }
 }
