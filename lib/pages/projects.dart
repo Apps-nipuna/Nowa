@@ -26,7 +26,7 @@ class Projects extends StatelessWidget {
         final response = await Supabase.instance.client
             .from('profiles')
             .select('user_role, position')
-            .eq('id', user!.id)
+            .eq('id', user.id)
             .single();
         final userRole = response['user_role'] as String? ?? '';
         final position = response['position'] as String? ?? '';
@@ -51,12 +51,6 @@ class Projects extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.arrow_back),
-                  ),
                   const SizedBox(width: 12),
                   Text(
                     'Projects',
@@ -88,6 +82,7 @@ class Projects extends StatelessWidget {
                 },
               ),
             ),
+            const SizedBox(height: 70),
           ],
         ),
       ),

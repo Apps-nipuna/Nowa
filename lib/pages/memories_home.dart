@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:orsa_3/models/gallery.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/pages/gallery_carousel.dart';
 import 'package:orsa_3/functions/sanitize_image_url.dart';
 
 @NowaGenerated()
@@ -62,7 +63,7 @@ class _MemoriesHomeState extends State<MemoriesHome> {
       return 'Recently';
     }
     try {
-      final createdDate = DateTime.parse(createdAt!);
+      final createdDate = DateTime.parse(createdAt);
       final now = DateTime.now();
       final difference = now.difference(createdDate);
       if (difference.inDays > 365) {
@@ -100,7 +101,7 @@ class _MemoriesHomeState extends State<MemoriesHome> {
         final response = await Supabase.instance.client
             .from('profiles')
             .select('user_role, position')
-            .eq('id', user!.id)
+            .eq('id', user.id)
             .single();
         final userRole = response['user_role'] as String? ?? '';
         final position = response['position'] as String? ?? '';
@@ -206,7 +207,7 @@ class _MemoriesHomeState extends State<MemoriesHome> {
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
-                    ),
+                    ).copyWith(bottom: 100),
                     itemCount: filteredGalleries.length,
                     itemBuilder: (context, index) {
                       final gallery = filteredGalleries[index];
@@ -272,20 +273,228 @@ class _GalleryCardState extends State<_GalleryCard> {
     _checkIfLiked();
   }
 
+  void _openCarousel() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GalleryCarousel(gallery: widget.gallery),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = sanitizeImageUrl(widget.gallery.coverImageUrl);
+    return GestureDetector(
+      onTap: _openCarousel,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: Theme.of(context).colorScheme.surface,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(
+                  context,
+                ).colorScheme.shadow.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    if (imageUrl.isNotEmpty)
+                      Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primaryContainer,
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 48,
+                                ),
+                              ),
+                        ),
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        child: Icon(
+                          Icons.image,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 48,
+                        ),
+                      ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: GestureDetector(
+                        onTap: _toggleLike,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surface.withValues(alpha: 0.9),
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            size: 20,
+                            color: isLiked
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.gallery.name,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.timeAgo,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                      if (widget.gallery.description != null &&
+                          widget.gallery.description!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            widget.gallery.description!,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.collections,
+                                  size: 18,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${widget.gallery.photoCount ?? 0} photos',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.favorite,
+                                  size: 18,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${likeCount} likes',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _checkIfLiked() async {
     try {
-      final userId = Supabase.instance.client.auth.currentUser!.id;
-      if (userId == null) {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
         return;
       }
+      final userId = user.id;
       final response = await Supabase.instance.client
           .from('gallery_likes')
           .select()
           .eq('user_id', userId)
           .eq('gallery_id', widget.gallery.id);
-      setState(() {
-        isLiked = response.isNotEmpty;
-      });
+      if (mounted) {
+        setState(() {
+          isLiked = response.isNotEmpty;
+        });
+      }
     } catch (e) {
       print('Error checking if liked: ${e}');
     }
@@ -293,10 +502,11 @@ class _GalleryCardState extends State<_GalleryCard> {
 
   Future<void> _toggleLike() async {
     try {
-      final userId = Supabase.instance.client.auth.currentUser!.id;
-      if (userId == null) {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
         return;
       }
+      final userId = user.id;
       if (isLiked) {
         await Supabase.instance.client
             .from('gallery_likes')
@@ -307,10 +517,12 @@ class _GalleryCardState extends State<_GalleryCard> {
             .from('galleries')
             .update({'like_count': likeCount - 1})
             .eq('id', widget.gallery.id);
-        setState(() {
-          isLiked = false;
-          likeCount--;
-        });
+        if (mounted) {
+          setState(() {
+            isLiked = false;
+            likeCount--;
+          });
+        }
       } else {
         await Supabase.instance.client.from('gallery_likes').insert({
           'user_id': userId,
@@ -321,201 +533,15 @@ class _GalleryCardState extends State<_GalleryCard> {
             .from('galleries')
             .update({'like_count': likeCount + 1})
             .eq('id', widget.gallery.id);
-        setState(() {
-          isLiked = true;
-          likeCount++;
-        });
+        if (mounted) {
+          setState(() {
+            isLiked = true;
+            likeCount++;
+          });
+        }
       }
     } catch (e) {
       print('Error toggling like: ${e}');
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl = sanitizeImageUrl(widget.gallery.coverImageUrl);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: Theme.of(context).colorScheme.surface,
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(
-                context,
-              ).colorScheme.shadow.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  if (imageUrl.isNotEmpty)
-                    Container(
-                      width: double.infinity,
-                      height: 200,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          child: Icon(
-                            Icons.image_not_supported,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 48,
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    Container(
-                      width: double.infinity,
-                      height: 200,
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      child: Icon(
-                        Icons.image,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 48,
-                      ),
-                    ),
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: GestureDetector(
-                      onTap: _toggleLike,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surface.withValues(alpha: 0.9),
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child: Icon(
-                          isLiked ? Icons.favorite : Icons.favorite_border,
-                          size: 20,
-                          color: isLiked
-                              ? Theme.of(context).colorScheme.error
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            widget.gallery.name,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          widget.timeAgo,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                    ),
-                    if (widget.gallery.description != null &&
-                        widget.gallery.description!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          widget.gallery.description!,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.collections,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${widget.gallery.photoCount ?? 0} photos',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.favorite,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${likeCount} likes',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

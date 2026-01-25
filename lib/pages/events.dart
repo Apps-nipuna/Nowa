@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:orsa_3/models/event_model.dart';
+import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 @NowaGenerated()
@@ -353,7 +353,7 @@ class _EventsState extends State<Events> {
         final response = await Supabase.instance.client
             .from('profiles')
             .select('user_role, position')
-            .eq('id', user!.id)
+            .eq('id', user.id)
             .single();
         final userRole = response['user_role'] as String? ?? '';
         final position = response['position'] as String? ?? '';
@@ -557,7 +557,7 @@ class _EventsState extends State<Events> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 100),
                 ],
               ),
             );

@@ -32,10 +32,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Navigator(
-        onGenerateRoute: (settings) =>
-            MaterialPageRoute(builder: (context) => _pages[_currentIndex]),
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,

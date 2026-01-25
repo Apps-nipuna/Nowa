@@ -523,6 +523,21 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildFloatingActionButton(ColorScheme colorScheme) {
+    return canCreateContent
+        ? FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CreateArticle()),
+              );
+            },
+            backgroundColor: colorScheme.primary,
+            child: Icon(Icons.add, color: colorScheme.onPrimary),
+          )
+        : const SizedBox.shrink();
+  }
+
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -581,6 +596,7 @@ class _HomePageState extends State<HomePage> {
                   _buildCategoryFilter(colorScheme, textTheme),
                   const SizedBox(height: 16),
                   _buildArticlesList(colorScheme, textTheme),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
