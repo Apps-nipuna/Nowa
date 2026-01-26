@@ -34,6 +34,46 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     super.dispose();
   }
 
+  Future<void> _createAccount() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() {
+        _errorMessage = 'Passwords do not match';
+      });
+      return;
+    }
+    if (_passwordController.text.length < 6) {
+      setState(() {
+        _errorMessage = 'Password must be at least 6 characters';
+      });
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await SupabaseService().signUp(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const CompleteProfile()),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -285,7 +325,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                           : () {
                               Navigator.pop(context);
                             },
-                      trackpadScrollToScaleFactor: const Offset(0, 0),
                       child: Text(
                         'Sign In',
                         style: textTheme.bodyMedium?.copyWith(
@@ -302,45 +341,5 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _createAccount() async {
-    if (_passwordController.text != _confirmPasswordController.text) {
-      setState(() {
-        _errorMessage = 'Passwords do not match';
-      });
-      return;
-    }
-    if (_passwordController.text.length < 6) {
-      setState(() {
-        _errorMessage = 'Password must be at least 6 characters';
-      });
-      return;
-    }
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      await SupabaseService().signUp(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const CompleteProfile()),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
   }
 }
