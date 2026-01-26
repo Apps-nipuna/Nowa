@@ -176,10 +176,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: colorScheme.tertiary.withValues(alpha: 0.1),
+                      color: colorScheme.tertiary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: colorScheme.tertiary.withValues(alpha: 0.3),
+                        color: colorScheme.tertiary.withValues(alpha: 0.4),
                       ),
                     ),
                     child: Row(
@@ -194,7 +194,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           child: Text(
                             _successMessage!,
                             style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.tertiary,
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
