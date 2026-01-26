@@ -1,0 +1,154 @@
+{
+    "canvases": [
+        {
+            "x": -298,
+            "y": -186,
+            "w": 393,
+            "h": 808,
+            "widget": "const CompleteProfile()",
+            "deps": [
+                "lib/pages/complete_profile.dart"
+            ]
+        },
+        {
+            "x": 142,
+            "y": -186,
+            "w": 393,
+            "h": 808,
+            "widget": "const CreateAccountPage()",
+            "deps": [
+                "lib/pages/create_account_page.dart"
+            ]
+        },
+        {
+            "x": 577,
+            "y": -186,
+            "w": 393,
+            "h": 808,
+            "widget": "const CreateArticle()",
+            "deps": [
+                "lib/pages/create_article.dart"
+            ]
+        },
+        {
+            "x": -298,
+            "y": 684,
+            "w": 393,
+            "h": 808,
+            "widget": "const Events()",
+            "deps": [
+                "lib/pages/events.dart"
+            ]
+        },
+        {
+            "x": 142,
+            "y": 684,
+            "w": 393,
+            "h": 808,
+            "widget": "const ForgotPasswordPage()",
+            "deps": [
+                "lib/pages/forgot_password_page.dart"
+            ]
+        },
+        {
+            "x": 577,
+            "y": 684,
+            "w": 393,
+            "h": 808,
+            "widget": "const GalleryCarousel()",
+            "deps": [
+                "lib/pages/gallery_carousel.dart"
+            ]
+        },
+        {
+            "x": 1049,
+            "y": -186,
+            "w": 393,
+            "h": 808,
+            "widget": "const HomePage()",
+            "deps": [
+                "lib/pages/home_page.dart"
+            ]
+        },
+        {
+            "x": 1049,
+            "y": 684,
+            "w": 393,
+            "h": 808,
+            "widget": "const MainNavigationPage()",
+            "deps": [
+                "lib/pages/main_navigation_page.dart"
+            ]
+        },
+        {
+            "x": -764,
+            "y": -186,
+            "w": 393,
+            "h": 808,
+            "widget": "const Members()",
+            "deps": [
+                "lib/pages/members.dart"
+            ]
+        },
+        {
+            "x": -764,
+            "y": 684,
+            "w": 393,
+            "h": 808,
+            "widget": "const MemoriesHome()",
+            "deps": [
+                "lib/pages/memories_home.dart"
+            ]
+        },
+        {
+            "x": -1266,
+            "y": -186,
+            "w": 393,
+            "h": 808,
+            "widget": "const MyProfile()",
+            "deps": [
+                "lib/pages/my_profile.dart"
+            ]
+        },
+        {
+            "x": -1266,
+            "y": 684,
+            "w": 393,
+            "h": 808,
+            "widget": "const PasswordReset()",
+            "deps": [
+                "lib/pages/password_reset.dart"
+            ]
+        },
+        {
+            "x": -1266,
+            "y": -1083,
+            "w": 393,
+            "h": 808,
+            "widget": "const ProjectDetails()",
+            "deps": [
+                "lib/pages/project_details.dart"
+            ]
+        },
+        {
+            "x": -764,
+            "y": -1083,
+            "w": 393,
+            "h": 808,
+            "widget": "const Projects()",
+            "deps": [
+                "lib/pages/projects.dart"
+            ]
+        },
+        {
+            "x": -298,
+            "y": -1083,
+            "w": 393,
+            "h": 808,
+            "widget": "const SignInPage()",
+            "deps": [
+                "lib/pages/sign_in_page.dart"
+            ]
+        }
+    ]
+}

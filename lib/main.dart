@@ -6,10 +6,17 @@ import 'package:provider/provider.dart';
 import 'package:orsa_3/globals/app_state.dart';
 import 'package:orsa_3/pages/complete_profile.dart';
 import 'package:orsa_3/pages/create_account_page.dart';
+import 'package:orsa_3/pages/create_article.dart';
+import 'package:orsa_3/pages/events.dart';
 import 'package:orsa_3/pages/forgot_password_page.dart';
+import 'package:orsa_3/pages/home_page.dart';
 import 'package:orsa_3/pages/main_navigation_page.dart';
-import 'package:orsa_3/pages/sign_in_page.dart';
+import 'package:orsa_3/pages/members.dart';
+import 'package:orsa_3/pages/memories_home.dart';
+import 'package:orsa_3/pages/my_profile.dart';
 import 'package:orsa_3/pages/password_reset.dart';
+import 'package:orsa_3/pages/projects.dart';
+import 'package:orsa_3/pages/sign_in_page.dart';
 
 @NowaGenerated()
 main() async {
@@ -35,10 +42,17 @@ class MyApp extends StatelessWidget {
         routes: {
           'CompleteProfile': (context) => const CompleteProfile(),
           'CreateAccountPage': (context) => const CreateAccountPage(),
+          'CreateArticle': (context) => const CreateArticle(),
+          'Events': (context) => const Events(),
           'ForgotPasswordPage': (context) => const ForgotPasswordPage(),
+          'HomePage': (context) => const HomePage(),
           'MainNavigationPage': (context) => const MainNavigationPage(),
-          'SignInPage': (context) => const SignInPage(),
+          'Members': (context) => const Members(),
+          'MemoriesHome': (context) => const MemoriesHome(),
+          'MyProfile': (context) => const MyProfile(),
           'PasswordReset': (context) => const PasswordReset(),
+          'Projects': (context) => const Projects(),
+          'SignInPage': (context) => const SignInPage(),
         },
       ),
     );

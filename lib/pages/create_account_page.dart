@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:orsa_3/integrations/supabase_service.dart';
-import 'package:orsa_3/pages/complete_profile.dart';
 
 @NowaGenerated()
 class CreateAccountPage extends StatefulWidget {
@@ -25,6 +24,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   bool _isLoading = false;
 
   String? _errorMessage;
+
+  String? _successMessage;
 
   @override
   void dispose() {
@@ -50,17 +51,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _successMessage = null;
     });
     try {
       await SupabaseService().signUp(
         _emailController.text.trim(),
         _passwordController.text,
       );
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const CompleteProfile()),
-        );
-      }
+      setState(() {
+        _successMessage =
+            'Account created! Please check your email to confirm your account. You will be redirected after confirmation.';
+        _emailController.clear();
+        _passwordController.clear();
+        _confirmPasswordController.clear();
+      });
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -163,6 +167,37 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     ),
                   ),
                 if (_errorMessage != null) const SizedBox(height: 16),
+                if (_successMessage != null)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.tertiary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: colorScheme.tertiary.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: colorScheme.tertiary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _successMessage!,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (_successMessage != null) const SizedBox(height: 16),
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -197,7 +232,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     ),
                   ),
                   keyboardType: TextInputType.emailAddress,
-                  enabled: !_isLoading,
+                  enabled: !_isLoading && _successMessage == null,
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -234,7 +269,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     ),
                   ),
                   obscureText: true,
-                  enabled: !_isLoading,
+                  enabled: !_isLoading && _successMessage == null,
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -271,14 +306,16 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     ),
                   ),
                   obscureText: true,
-                  enabled: !_isLoading,
+                  enabled: !_isLoading && _successMessage == null,
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _createAccount,
+                    onPressed: (_isLoading || _successMessage != null)
+                        ? null
+                        : _createAccount,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colorScheme.primary,
                       disabledBackgroundColor: colorScheme.primary.withValues(
@@ -320,7 +357,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: _isLoading
+                      onTap: (_isLoading || _successMessage != null)
                           ? null
                           : () {
                               Navigator.pop(context);
