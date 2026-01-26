@@ -19,13 +19,6 @@ class SupabaseService {
     );
   }
 
-  Future<AuthResponse> signUp(String email, String password) async {
-    return Supabase.instance.client.auth.signUp(
-      email: email,
-      password: password,
-    );
-  }
-
   Future<void> signOut() async {
     await Supabase.instance.client.auth.signOut();
   }
@@ -44,5 +37,13 @@ class SupabaseService {
         });
       }
     });
+  }
+
+  Future<AuthResponse> signUp(String email, String password) async {
+    return Supabase.instance.client.auth.signUp(
+      email: email,
+      password: password,
+      emailRedirectTo: 'com.seroniya.apps.orsa3://auth-callback',
+    );
   }
 }
