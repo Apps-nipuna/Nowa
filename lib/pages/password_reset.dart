@@ -65,7 +65,8 @@ class _PasswordResetState extends State<PasswordReset> {
       setState(() => _successMessage = 'Password updated successfully!');
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) {
-        Navigator.pop(context);
+        // Send them back to Sign In page to log in with the new password
+        Navigator.of(context).pushReplacementNamed('SignInPage');
       }
     } catch (e) {
       setState(() => _errorMessage = e.toString());
