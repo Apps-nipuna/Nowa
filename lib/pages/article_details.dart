@@ -488,42 +488,6 @@ class _ArticleDetailsState extends State<ArticleDetails> {
         );
       }
     }
-    return Container(
-      color: colorScheme.surface,
-      child: Column(
-        children: [
-          Container(
-            color: colorScheme.primary,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Icon(
-                    Icons.arrow_back_ios,
-                    color: colorScheme.onPrimary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    'විපසරණ',
-                    style: textTheme.headlineSmall?.copyWith(
-                      color: colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(child: bodyContent),
-        ],
-      ),
-    );
-    ;
-    ;
-    ;
+    return Container(color: colorScheme.surface, child: bodyContent);
   }
 }
