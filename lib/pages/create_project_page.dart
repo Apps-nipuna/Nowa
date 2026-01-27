@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
+import 'package:orsa_3/models/profile_member.dart';
+import 'package:orsa_3/integrations/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:orsa_3/components/team_member_selector_dialog.dart';
 
 @NowaGenerated()
 class CreateProjectPage extends StatefulWidget {
@@ -26,176 +30,7 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
 
   String? uploadedImagePath;
 
-  @override
-  void initState() {
-    super.initState();
-    projectNameCtrl = TextEditingController();
-    projectTypeCtrl = TextEditingController();
-    descriptionCtrl = TextEditingController();
-    budgetCtrl = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    projectNameCtrl.dispose();
-    projectTypeCtrl.dispose();
-    descriptionCtrl.dispose();
-    budgetCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 20,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colors.primary,
-                      colors.primary.withValues(alpha: 0.7),
-                    ],
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Create New Project',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Share your vision and start making an impact',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildField(
-                      'Project Name *',
-                      'Enter project name',
-                      Icons.edit,
-                      projectNameCtrl,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildField(
-                      'Project Type',
-                      'e.g., Community, Education',
-                      Icons.category,
-                      projectTypeCtrl,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildField(
-                      'Description',
-                      'Describe your project...',
-                      Icons.description,
-                      descriptionCtrl,
-                      lines: 4,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildField(
-                      'Budget Goal',
-                      'Enter budget amount',
-                      Icons.attach_money,
-                      budgetCtrl,
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildImageUploadSection(),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (projectNameCtrl.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Enter project name'),
-                              ),
-                            );
-                            return;
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Project created!')),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Create Project',
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  List<ProfileMember> selectedTeamMembers = [];
 
   Widget _buildImageUploadSection() {
     final colors = Theme.of(context).colorScheme;
@@ -329,6 +164,24 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    projectNameCtrl = TextEditingController();
+    projectTypeCtrl = TextEditingController();
+    descriptionCtrl = TextEditingController();
+    budgetCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    projectNameCtrl.dispose();
+    projectTypeCtrl.dispose();
+    descriptionCtrl.dispose();
+    budgetCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
     final result = await showMediaPicker(
       context: context,
@@ -339,5 +192,350 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
         uploadedImagePath = result.first.path;
       });
     }
+  }
+
+  void _removeTeamMember(String memberId) {
+    setState(() {
+      selectedTeamMembers.removeWhere((member) => member.id == memberId);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colors.primary,
+                      colors.primary.withValues(alpha: 0.7),
+                    ],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Create New Project',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Share your vision and start making an impact',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildField(
+                      'Project Name *',
+                      'Enter project name',
+                      Icons.edit,
+                      projectNameCtrl,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildField(
+                      'Project Type',
+                      'e.g., Community, Education',
+                      Icons.category,
+                      projectTypeCtrl,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildField(
+                      'Description',
+                      'Describe your project...',
+                      Icons.description,
+                      descriptionCtrl,
+                      lines: 4,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildField(
+                      'Budget Goal',
+                      'Enter budget amount',
+                      Icons.attach_money,
+                      budgetCtrl,
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildImageUploadSection(),
+                    const SizedBox(height: 24),
+                    _buildTeamMembersSection(),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _submitProject,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Create Project',
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTeamMembersSection() {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Team Members',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        if (selectedTeamMembers.isEmpty)
+          GestureDetector(
+            onTap: _showTeamMemberSelector,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add_circle_outline,
+                    color: colors.primary.withValues(alpha: 0.6),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Add team members',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.primary.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Column(
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: selectedTeamMembers
+                    .map(
+                      (member) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.primary.withValues(alpha: 0.1),
+                          border: Border.all(color: colors.primary),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (member.avatarUrl != null)
+                              ClipOval(
+                                child: Image.network(
+                                  member.avatarUrl!,
+                                  width: 24,
+                                  height: 24,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            else
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: colors.primary.withValues(alpha: 0.5),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Text(
+                              member.fullName ?? member.commonName ?? 'Unknown',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => _removeTeamMember(member.id),
+                              child: Icon(
+                                Icons.close,
+                                size: 16,
+                                color: colors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: _showTeamMemberSelector,
+                child: Text(
+                  '+ Add more members',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Future<void> _submitProject() async {
+    if (projectNameCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter project name')));
+      return;
+    }
+    try {
+      final supabaseService = SupabaseService();
+      final projectData = {
+        'project_name': projectNameCtrl.text,
+        'project_type': projectTypeCtrl.text.isEmpty
+            ? null
+            : projectTypeCtrl.text,
+        'description': descriptionCtrl.text.isEmpty
+            ? null
+            : descriptionCtrl.text,
+        'budget_goal': budgetCtrl.text.isEmpty
+            ? null
+            : double.tryParse(budgetCtrl.text),
+        'image_after_url': uploadedImagePath,
+        'budget_collected': 0,
+        'total_tasks': 0,
+        'completed_tasks': 0,
+      };
+      final projectResponse = await Supabase.instance.client
+          .from('projects')
+          .insert([projectData])
+          .select();
+      if (projectResponse.isNotEmpty) {
+        final projectId = projectResponse[0]['id'] as int;
+        for (final member in selectedTeamMembers) {
+          await Supabase.instance.client.from('project_team_members').insert({
+            'project_id': projectId,
+            'user_id': member.id,
+          });
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Project created successfully!')),
+          );
+          Navigator.pop(context);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error creating project: ${e}')));
+      }
+    }
+  }
+
+  Future<void> _showTeamMemberSelector() async {
+    showDialog(
+      context: context,
+      builder: (ctx) => TeamMemberSelectorDialog(
+        selectedMembers: selectedTeamMembers,
+        onMemberSelected: (member) {
+          setState(() {
+            if (!selectedTeamMembers.any((m) => m.id == member.id)) {
+              selectedTeamMembers.add(member);
+            }
+          });
+        },
+      ),
+    );
   }
 }
