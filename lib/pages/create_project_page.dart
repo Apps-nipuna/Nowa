@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
-import 'package:orsa_3/models/profile_member.dart';
 import 'package:orsa_3/components/team_member_selector_dialog.dart';
+import 'package:orsa_3/models/profile_member.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 @NowaGenerated()
@@ -34,6 +34,10 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
   String? uploadedFileName;
 
   String? uploadedFilePath;
+
+  List<String> projectTasks = [];
+
+  late TextEditingController taskInputCtrl;
 
   Widget _buildImageUploadSection() {
     final colors = Theme.of(context).colorScheme;
@@ -165,24 +169,6 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
         ),
       ],
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    projectNameCtrl = TextEditingController();
-    projectTypeCtrl = TextEditingController();
-    descriptionCtrl = TextEditingController();
-    budgetCtrl = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    projectNameCtrl.dispose();
-    projectTypeCtrl.dispose();
-    descriptionCtrl.dispose();
-    budgetCtrl.dispose();
-    super.dispose();
   }
 
   Future<void> _pickImage() async {
@@ -453,6 +439,156 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
     );
   }
 
+  void _addTask(String taskName) {
+    if (taskName.trim().isNotEmpty && !projectTasks.contains(taskName.trim())) {
+      setState(() {
+        projectTasks.add(taskName.trim());
+        taskInputCtrl.clear();
+      });
+    }
+  }
+
+  void _removeTask(String taskName) {
+    setState(() {
+      projectTasks.remove(taskName);
+    });
+  }
+
+  Widget _buildTasksSection() {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Project Tasks',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: taskInputCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Enter task name',
+                  prefixIcon: const Icon(Icons.task_alt),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.primary, width: 2),
+                  ),
+                ),
+                onSubmitted: (value) => _addTask(value),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: colors.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.add, color: Colors.white),
+                onPressed: () => _addTask(taskInputCtrl.text),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (projectTasks.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: colors.primary.withValues(alpha: 0.2),
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                'No tasks added yet',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.primary.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: projectTasks.length,
+            itemBuilder: (ctx, idx) {
+              final task = projectTasks[idx];
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.08),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.3),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_box_outline_blank,
+                      color: colors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        task,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _removeTask(task),
+                      child: Icon(Icons.close, color: colors.error, size: 20),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    projectNameCtrl = TextEditingController();
+    projectTypeCtrl = TextEditingController();
+    descriptionCtrl = TextEditingController();
+    budgetCtrl = TextEditingController();
+    taskInputCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    projectNameCtrl.dispose();
+    projectTypeCtrl.dispose();
+    descriptionCtrl.dispose();
+    budgetCtrl.dispose();
+    taskInputCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -548,6 +684,8 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
                     _buildFileUploadSection(),
                     const SizedBox(height: 24),
                     _buildTeamMembersSection(),
+                    const SizedBox(height: 24),
+                    _buildTasksSection(),
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
@@ -619,7 +757,7 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
             : double.tryParse(budgetCtrl.text),
         'image_after_url': uploadedImagePath,
         'budget_collected': 0,
-        'total_tasks': 0,
+        'total_tasks': projectTasks.length,
         'completed_tasks': 0,
       };
       final projectResponse = await Supabase.instance.client
@@ -660,6 +798,13 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
               );
             }
           }
+        }
+        for (final task in projectTasks) {
+          await Supabase.instance.client.from('project_tasks').insert({
+            'project_id': projectId,
+            'task_name': task,
+            'status': 'Pending',
+          });
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
