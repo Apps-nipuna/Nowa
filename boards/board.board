@@ -149,6 +149,16 @@
             "deps": [
                 "lib/pages/sign_in_page.dart"
             ]
+        },
+        {
+            "x": 142,
+            "y": -1083,
+            "w": 393,
+            "h": 808,
+            "widget": "const CreateProjectPage()",
+            "deps": [
+                "lib/pages/create_project_page.dart"
+            ]
         }
     ]
 }
