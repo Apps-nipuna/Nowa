@@ -3,6 +3,7 @@ import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:orsa_3/models/project_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:orsa_3/components/project_card.dart';
+import 'package:orsa_3/pages/create_project_page.dart';
 
 @NowaGenerated()
 class Projects extends StatelessWidget {
@@ -92,10 +93,10 @@ class Projects extends StatelessWidget {
           if (snapshot.hasData && snapshot.data == true) {
             return FloatingActionButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('New project action'),
-                    duration: Duration(seconds: 2),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateProjectPage(),
                   ),
                 );
               },

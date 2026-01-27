@@ -638,23 +638,7 @@ class _MembersState extends State<Members> {
           ),
         ),
       ),
-      floatingActionButton: canCreateContent
-          ? FloatingActionButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('New member action'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: Icon(
-                Icons.add,
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-            )
-          : null,
+      floatingActionButton: null,
     );
   }
 }
