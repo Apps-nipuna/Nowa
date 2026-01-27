@@ -1,6 +1,7 @@
 import 'package:nowa_runtime/nowa_runtime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:orsa_3/models/profile.dart';
+import 'package:flutter/material.dart';
 import 'package:orsa_3/main.dart';
 
 @NowaGenerated()
@@ -60,7 +61,7 @@ class SupabaseService {
     }
   }
 
-  Future initialize() async {
+  Future initialize(BuildContext context) async {
     await Supabase.initialize(
       url: 'https://fzbdaqrmkfsvztgooibj.supabase.co',
       anonKey:

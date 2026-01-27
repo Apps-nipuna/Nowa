@@ -1,19 +1,4 @@
-import 'package:flutter/material.dart';
 import 'package:nowa_runtime/nowa_runtime.dart';
-import 'package:orsa_3/components/team_member_selector_dialog.dart';
-import 'package:orsa_3/models/profile_member.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
-@NowaGenerated()
-class CreateProjectPage extends StatefulWidget {
-  @NowaGenerated({'loader': 'auto-constructor'})
-  const CreateProjectPage({super.key});
-
-  @override
-  State<CreateProjectPage> createState() {
-    return _CreateProjectPageState();
-  }
-}
 
 @NowaGenerated()
 class _CreateProjectPageState extends State<CreateProjectPage> {
@@ -778,7 +763,10 @@ class _CreateProjectPageState extends State<CreateProjectPage> {
                 '${projectId}_${DateTime.now().millisecondsSinceEpoch}_${uploadedFileName}';
             await Supabase.instance.client.storage
                 .from('project_files')
-                .upload(fileName, uploadedFilePath!);
+                .uploadBinary(
+                  fileName,
+                  await File(uploadedFilePath).readAsBytes(),
+                );
             final fileUrl = Supabase.instance.client.storage
                 .from('project_files')
                 .getPublicUrl(fileName);
