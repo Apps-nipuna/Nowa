@@ -5,9 +5,6 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       flutter: stable
-      vars:
-        # Fix for Java heap space error - Codemagic recommended approach
-        JAVA_TOOL_OPTIONS: "-Xmx5g"
     scripts:
       - name: Set up local.properties
         script: | 
@@ -29,9 +26,6 @@ workflows:
       groups:
         - android_key_info # Includes (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION)
       flutter: stable
-      vars:
-        # Fix for Java heap space error - Codemagic recommended approach
-        JAVA_TOOL_OPTIONS: "-Xmx5g"
     scripts:
       - name: Set up local.properties
         script: | 
@@ -139,3 +133,4 @@ workflows:
       #     --build-name=1.0.$BUILD_NUMBER \
       #     --build-number=$BUILD_NUMBER\
       #     --export-options-plist=/Users/builder/export_options.plist
+    
