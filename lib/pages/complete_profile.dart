@@ -55,7 +55,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
   void _onRoleChanged(String? newRole) {
     if (newRole != null) {
       setState(() {
-        _selectedRole = newRole!;
+        _selectedRole = newRole;
       });
     }
   }
@@ -63,7 +63,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
   void _onPositionChanged(String? newPosition) {
     if (newPosition != null) {
       setState(() {
-        _selectedPosition = newPosition!;
+        _selectedPosition = newPosition;
       });
     }
   }
@@ -81,7 +81,7 @@ class _CompleteProfileState extends State<CompleteProfile> {
         final response = await Supabase.instance.client
             .from('profiles')
             .select('avatar_url')
-            .eq('id', user!.id)
+            .eq('id', user.id)
             .single();
         if (mounted) {
           setState(() {

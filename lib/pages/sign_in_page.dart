@@ -313,7 +313,7 @@ class _SignInPageState extends State<SignInPage> {
             final response = await Supabase.instance.client
                 .from('profiles')
                 .select('common_name')
-                .eq('id', user!.id)
+                .eq('id', user.id)
                 .single();
             final commonName = response['common_name'];
             if (commonName == null || commonName.toString().isEmpty) {

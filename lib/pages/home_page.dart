@@ -381,6 +381,100 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildFloatingActionButton(ColorScheme colorScheme) {
+    return canCreateContent
+        ? FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CreateArticle()),
+              );
+            },
+            backgroundColor: colorScheme.primary,
+            child: Icon(Icons.add, color: colorScheme.onPrimary),
+          )
+        : const SizedBox.shrink();
+  }
+
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: colorScheme.primary,
+        elevation: 0,
+        title: Text(
+          'ORSA',
+          style: textTheme.headlineSmall?.copyWith(
+            color: colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.notifications_outlined,
+              color: colorScheme.onPrimary,
+            ),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: Icon(Icons.help_outline, color: colorScheme.onPrimary),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+              ),
+            )
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (allArticles.isNotEmpty)
+                    _buildLatestArticleCover(colorScheme, textTheme),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'Top News',
+                      style: textTheme.titleLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (topArticles.isNotEmpty)
+                    _buildTopArticlesHorizontal(colorScheme, textTheme),
+                  const SizedBox(height: 24),
+                  _buildCategoryFilter(colorScheme, textTheme),
+                  const SizedBox(height: 16),
+                  _buildArticlesList(colorScheme, textTheme),
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+      floatingActionButton: canCreateContent
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateArticle(),
+                  ),
+                );
+              },
+              backgroundColor: colorScheme.primary,
+              child: Icon(Icons.add, color: colorScheme.onPrimary),
+            )
+          : null,
+    );
+  }
+
   Widget _buildArticlesList(ColorScheme colorScheme, TextTheme textTheme) {
     return ListView.builder(
       shrinkWrap: true,
@@ -520,100 +614,6 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildFloatingActionButton(ColorScheme colorScheme) {
-    return canCreateContent
-        ? FloatingActionButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CreateArticle()),
-              );
-            },
-            backgroundColor: colorScheme.primary,
-            child: Icon(Icons.add, color: colorScheme.onPrimary),
-          )
-        : const SizedBox.shrink();
-  }
-
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.primary,
-        elevation: 0,
-        title: Text(
-          'ORSA',
-          style: textTheme.headlineSmall?.copyWith(
-            color: colorScheme.onPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: colorScheme.onPrimary,
-            ),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.help_outline, color: colorScheme.onPrimary),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
-              ),
-            )
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (allArticles.isNotEmpty)
-                    _buildLatestArticleCover(colorScheme, textTheme),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Top News',
-                      style: textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (topArticles.isNotEmpty)
-                    _buildTopArticlesHorizontal(colorScheme, textTheme),
-                  const SizedBox(height: 24),
-                  _buildCategoryFilter(colorScheme, textTheme),
-                  const SizedBox(height: 16),
-                  _buildArticlesList(colorScheme, textTheme),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-      floatingActionButton: canCreateContent
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CreateArticle(),
-                  ),
-                );
-              },
-              backgroundColor: colorScheme.primary,
-              child: Icon(Icons.add, color: colorScheme.onPrimary),
-            )
-          : null,
     );
   }
 }

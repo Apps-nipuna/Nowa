@@ -296,10 +296,10 @@ class _MyProfileState extends State<MyProfile> {
   Future<Map<String, dynamic>?> _fetchCurrentUserProfile() async {
     try {
       final user = Supabase.instance.client.auth.currentUser;
-      final userId = user!.id;
-      if (userId == null) {
+      if (user == null) {
         return null;
       }
+      final userId = user.id;
       final response = await Supabase.instance.client
           .from('profiles')
           .select()
